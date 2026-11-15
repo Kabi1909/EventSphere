@@ -559,11 +559,16 @@ async def admin_create_event(
     set_flash(request, f"Event '{title}' created ({status}).", "success")
     return RedirectResponse("/admin", status_code=303) 
 
-@app.post("/admin/events/{event_id}/status")
-def admin_update_event_status(
+@app.post("/admin/events/{event_id}/edit")
+def admin_edit_event(
     event_id: int,
     request: Request,
-    new_status: str = Form(...),
+    title: str = Form(...),
+    category: str = Form(...),
+    venue_id: int = Form(...),
+    start_time: str = Form(...),
+    end_time: str = Form(...),
+    description: str = Form(""),
     csrf_token: str = Form(...),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
@@ -573,18 +578,14 @@ def admin_update_event_status(
     ev = db.query(Event).filter_by(id=event_id).first()
     if not ev:
         raise HTTPException(status_code=404)
-    ev.status = new_status
-    if new_status == "cancelled":
-        msg = AgentMessage(
-            sender=f"Admin:{user.id}",
-            receiver="BookingAgent",
-            performative=Performative.REQUEST,
-            action="EVENT_CANCELLED_REFUNDS",
-            content={"event_id": ev.id},
-        )
-        bus.send(db, msg)
+    ev.title = title.strip()
+    ev.category = category
+    ev.venue_id = venue_id
+    ev.start_time = datetime.fromisoformat(start_time)
+    ev.end_time = datetime.fromisoformat(end_time)
+    ev.description = description.strip()
     db.commit()
-    set_flash(request, f"Event status updated to {new_status}.", "info")
+    set_flash(request, f"Event '{ev.title}' updated successfully.", "success")
     return RedirectResponse("/admin", status_code=303)
 
 @app.post("/admin/hires/{hire_id}/decide")

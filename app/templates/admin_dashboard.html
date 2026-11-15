@@ -22,17 +22,79 @@
           <td>{{ s.checkins }}</td>
           <td>LKR {{ '%.2f'|format(s.revenue) }}</td>
           <td>
-            <form method="post" action="/admin/events/{{ s.event.id }}/status" class="d-flex gap-1">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-              {% if s.event.status == 'draft' %}
-                <button name="new_status" value="published" class="btn btn-success btn-sm">Publish</button>
-              {% endif %}
-              {% if s.event.status != 'cancelled' %}
-                <button name="new_status" value="cancelled" class="btn btn-outline-danger btn-sm">Cancel</button>
-              {% endif %}
-            </form>
+            <div class="d-flex flex-wrap gap-1">
+              <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editEventModal{{ s.event.id }}">
+                Edit
+              </button>
+              <form method="post" action="/admin/events/{{ s.event.id }}/status" class="d-flex gap-1">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% if s.event.status == 'draft' %}
+                  <button name="new_status" value="published" class="btn btn-success btn-sm">Publish</button>
+                {% endif %}
+                {% if s.event.status != 'cancelled' %}
+                  <button name="new_status" value="cancelled" class="btn btn-outline-danger btn-sm">Cancel</button>
+                {% endif %}
+              </form>
+            </div>
           </td>
         </tr>
+
+        <!-- Edit Event Modal -->
+        <div class="modal fade" id="editEventModal{{ s.event.id }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="post" action="/admin/events/{{ s.event.id }}/edit">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="modal-header">
+                  <h5 class="modal-title fw-bold">Edit Event: {{ s.event.title }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-2">
+                    <label class="form-label small fw-bold">Event Title</label>
+                    <input type="text" name="title" class="form-control" value="{{ s.event.title }}" required>
+                  </div>
+                  <div class="row g-2 mb-2">
+                    <div class="col-6">
+                      <label class="form-label small fw-bold">Category</label>
+                      <select name="category" class="form-select">
+                        {% for cat in ['Conference', 'Concert', 'Workshop', 'Seminar'] %}
+                          <option value="{{ cat }}" {% if s.event.category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-bold">Venue</label>
+                      <select name="venue_id" class="form-select">
+                        {% for v in venues %}
+                          <option value="{{ v.id }}" {% if s.event.venue_id == v.id %}selected{% endif %}>{{ v.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row g-2 mb-2">
+                    <div class="col-6">
+                      <label class="form-label small fw-bold">Start Time</label>
+                      <input type="datetime-local" name="start_time" class="form-control" value="{{ s.event.start_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-bold">End Time</label>
+                      <input type="datetime-local" name="end_time" class="form-control" value="{{ s.event.end_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+                    </div>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label small fw-bold">Description</label>
+                    <textarea name="description" class="form-control" rows="2">{{ s.event.description or '' }}</textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
         {% endfor %}
       </tbody>
     </table>
