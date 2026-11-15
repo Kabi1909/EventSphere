@@ -1,3 +1,4 @@
+from typing import Any
 from datetime import datetime, timedelta, timezone
 import secrets
 from sqlalchemy.orm import Session
@@ -132,3 +133,4 @@ class TicketAgent(BaseAgent):
             )
 
         return self.reply(msg, Performative.FAILURE, {"reason": f"Unsupported action {msg.action}"})
+
