@@ -1,38 +1,164 @@
 {% extends "base.html" %}
 {% block content %}
-<h3 class="fw-bold mb-3">Organiser & Multi-Agent Control Center</h3>
+<style>
+  .dashboard-section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+  }
+  .dashboard-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    background-color: #ffffff;
+  }
+  .kpi-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    transition: transform 0.15s ease;
+  }
+  .field-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #475569;
+    margin-bottom: 0.35rem;
+    display: block;
+  }
+  .belief-card {
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #2563eb;
+    border-radius: 10px;
+    background-color: #f8fafc;
+    padding: 0.85rem 1rem;
+    height: 100%;
+  }
+  .belief-card.agent-ticket { border-left-color: #059669; }
+  .belief-card.agent-venue { border-left-color: #7c3aed; }
+  .belief-card.agent-notification { border-left-color: #d97706; }
+  .belief-card.agent-waitlist { border-left-color: #0891b2; }
+  .belief-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    word-break: break-word;
+  }
+  .table-modern thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 0.75rem;
+  }
+  .table-modern tbody td {
+    padding: 0.85rem 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+</style>
+
+<!-- Page Header -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1 text-dark">Organiser & Multi-Agent Control Center</h3>
+    <p class="text-muted small mb-0">Real-time event operations, autonomous agent beliefs, and FIPA message bus traceability</p>
+  </div>
+  <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill">
+    MAS Engine Active
+  </span>
+</div>
+
+<!-- Top KPI Overview Strip -->
+{% set ns = namespace(total_sold=0, total_cap=0, total_checkins=0, total_rev=0.0) %}
+{% for s in event_stats %}
+  {% set ns.total_sold = ns.total_sold + s.sold %}
+  {% set ns.total_cap = ns.total_cap + s.capacity %}
+  {% set ns.total_checkins = ns.total_checkins + s.checkins %}
+  {% set ns.total_rev = ns.total_rev + s.revenue %}
+{% endfor %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="kpi-card p-3">
+      <div class="text-muted small fw-semibold text-uppercase">Active Events</div>
+      <div class="fs-4 fw-bold text-dark mt-1">{{ event_stats|length }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card p-3">
+      <div class="text-muted small fw-semibold text-uppercase">Tickets Sold</div>
+      <div class="fs-4 fw-bold text-primary mt-1">{{ ns.total_sold }} <span class="fs-6 text-muted fw-normal">/ {{ ns.total_cap }}</span></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card p-3">
+      <div class="text-muted small fw-semibold text-uppercase">Gate Check-Ins</div>
+      <div class="fs-4 fw-bold text-success mt-1">{{ ns.total_checkins }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card p-3">
+      <div class="text-muted small fw-semibold text-uppercase">Total Revenue</div>
+      <div class="fs-4 fw-bold text-dark mt-1">LKR {{ '%.2f'|format(ns.total_rev) }}</div>
+    </div>
+  </div>
+</div>
 
 <!-- Event Sales & Check-in Overview -->
-<div class="card p-3 mb-4">
-  <h5 class="fw-bold mb-3">Event Sales, Revenue & Check-Ins</h5>
+<div class="dashboard-card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="dashboard-section-title mb-0">Event Sales, Revenue & Check-Ins</h5>
+    <span class="text-muted small">{{ event_stats|length }} scheduled event(s)</span>
+  </div>
   <div class="table-responsive">
-    <table class="table table-sm align-middle">
+    <table class="table table-modern align-middle mb-0">
       <thead>
         <tr>
-          <th>Event</th><th>Venue</th><th>Status</th><th>Sold / Cap</th><th>Check-ins</th><th>Revenue</th><th>Actions</th>
+          <th>Event</th>
+          <th>Venue</th>
+          <th>Status</th>
+          <th>Sold / Cap</th>
+          <th>Check-ins</th>
+          <th>Revenue</th>
+          <th class="text-end">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for s in event_stats %}
         <tr>
-          <td><strong>{{ s.event.title }}</strong><br><small class="text-muted">{{ s.event.start_time.strftime('%Y-%m-%d %H:%M') }}</small></td>
-          <td>{{ s.event.venue.name }}</td>
-          <td><span class="badge bg-secondary">{{ s.event.status }}</span></td>
-          <td>{{ s.sold }} / {{ s.capacity }}</td>
-          <td>{{ s.checkins }}</td>
-          <td>LKR {{ '%.2f'|format(s.revenue) }}</td>
           <td>
-            <div class="d-flex flex-wrap gap-1">
-              <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editEventModal{{ s.event.id }}">
+            <div class="fw-bold text-dark">{{ s.event.title }}</div>
+            <small class="text-muted">{{ s.event.start_time.strftime('%Y-%m-%d %H:%M') }} &ndash; {{ s.event.end_time.strftime('%H:%M') }}</small>
+          </td>
+          <td>{{ s.event.venue.name }}</td>
+          <td>
+            {% if s.event.status == 'published' %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Published</span>
+            {% elif s.event.status == 'draft' %}
+              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1">Draft</span>
+            {% else %}
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">{{ s.event.status|capitalize }}</span>
+            {% endif %}
+          </td>
+          <td><strong>{{ s.sold }}</strong> / {{ s.capacity }}</td>
+          <td>{{ s.checkins }}</td>
+          <td class="fw-semibold">LKR {{ '%.2f'|format(s.revenue) }}</td>
+          <td>
+            <div class="d-flex justify-content-end flex-wrap gap-2">
+              <button type="button" class="btn btn-outline-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#editEventModal{{ s.event.id }}">
                 Edit
               </button>
-              <form method="post" action="/admin/events/{{ s.event.id }}/status" class="d-flex gap-1">
+              <form method="post" action="/admin/events/{{ s.event.id }}/status" class="d-flex gap-2">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if s.event.status == 'draft' %}
-                  <button name="new_status" value="published" class="btn btn-success btn-sm">Publish</button>
+                  <button name="new_status" value="published" class="btn btn-success btn-sm px-3">Publish</button>
                 {% endif %}
                 {% if s.event.status != 'cancelled' %}
-                  <button name="new_status" value="cancelled" class="btn btn-outline-danger btn-sm">Cancel</button>
+                  <button name="new_status" value="cancelled" class="btn btn-outline-danger btn-sm px-3">Cancel</button>
                 {% endif %}
               </form>
             </div>
@@ -41,22 +167,22 @@
 
         <!-- Edit Event Modal -->
         <div class="modal fade" id="editEventModal{{ s.event.id }}" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
               <form method="post" action="/admin/events/{{ s.event.id }}/edit">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <div class="modal-header">
+                <div class="modal-header bg-light">
                   <h5 class="modal-title fw-bold">Edit Event: {{ s.event.title }}</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                  <div class="mb-2">
-                    <label class="form-label small fw-bold">Event Title</label>
+                <div class="modal-body p-4">
+                  <div class="mb-3">
+                    <label class="field-label">Event Title</label>
                     <input type="text" name="title" class="form-control" value="{{ s.event.title }}" required>
                   </div>
-                  <div class="row g-2 mb-2">
+                  <div class="row g-3 mb-3">
                     <div class="col-6">
-                      <label class="form-label small fw-bold">Category</label>
+                      <label class="field-label">Category</label>
                       <select name="category" class="form-select">
                         {% for cat in ['Conference', 'Concert', 'Workshop', 'Seminar'] %}
                           <option value="{{ cat }}" {% if s.event.category == cat %}selected{% endif %}>{{ cat }}</option>
@@ -64,7 +190,7 @@
                       </select>
                     </div>
                     <div class="col-6">
-                      <label class="form-label small fw-bold">Venue</label>
+                      <label class="field-label">Venue</label>
                       <select name="venue_id" class="form-select">
                         {% for v in venues %}
                           <option value="{{ v.id }}" {% if s.event.venue_id == v.id %}selected{% endif %}>{{ v.name }}</option>
@@ -72,24 +198,24 @@
                       </select>
                     </div>
                   </div>
-                  <div class="row g-2 mb-2">
+                  <div class="row g-3 mb-3">
                     <div class="col-6">
-                      <label class="form-label small fw-bold">Start Time</label>
+                      <label class="field-label">Start Time</label>
                       <input type="datetime-local" name="start_time" class="form-control" value="{{ s.event.start_time.strftime('%Y-%m-%dT%H:%M') }}" required>
                     </div>
                     <div class="col-6">
-                      <label class="form-label small fw-bold">End Time</label>
+                      <label class="field-label">End Time</label>
                       <input type="datetime-local" name="end_time" class="form-control" value="{{ s.event.end_time.strftime('%Y-%m-%dT%H:%M') }}" required>
                     </div>
                   </div>
                   <div class="mb-2">
-                    <label class="form-label small fw-bold">Description</label>
-                    <textarea name="description" class="form-control" rows="2">{{ s.event.description or '' }}</textarea>
+                    <label class="field-label">Description</label>
+                    <textarea name="description" class="form-control" rows="3">{{ s.event.description or '' }}</textarea>
                   </div>
                 </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                  <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+                <div class="modal-footer bg-light">
+                  <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-primary btn-sm px-4">Save Changes</button>
                 </div>
               </form>
             </div>
@@ -103,122 +229,235 @@
 
 <!-- Escalated Private Hire Approvals -->
 {% if escalated_hires %}
-<div class="card p-3 mb-4 border-warning">
-  <h5 class="fw-bold text-warning">Escalated Private Venue Hire Requests</h5>
+<div class="dashboard-card p-4 mb-4 border-warning border-2">
+  <h5 class="dashboard-section-title text-warning-emphasis mb-3">Escalated Private Venue Hire Requests</h5>
   {% for h in escalated_hires %}
-    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom py-2">
+    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom py-3 gap-2">
       <div>
-        <strong>{{ h.venue.name }}</strong> — {{ h.purpose }} ({{ h.guest_count }} guests, Quote: LKR {{ '%.2f'|format(h.quoted_price) }})<br>
+        <strong class="text-dark">{{ h.venue.name }}</strong> &mdash; {{ h.purpose }}
+        <span class="badge bg-light text-dark border ms-1">{{ h.guest_count }} guests</span>
+        <span class="badge bg-primary-subtle text-primary ms-1">Quote: LKR {{ '%.2f'|format(h.quoted_price) }}</span><br>
         <small class="text-muted">{{ h.start_time }} to {{ h.end_time }} | {{ h.agent_notes }}</small>
       </div>
       <form method="post" action="/admin/hires/{{ h.id }}/decide" class="d-flex gap-2">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button name="decision" value="approve" class="btn btn-success btn-sm">Approve</button>
-        <button name="decision" value="reject" class="btn btn-danger btn-sm">Reject</button>
+        <button name="decision" value="approve" class="btn btn-success btn-sm px-3">Approve</button>
+        <button name="decision" value="reject" class="btn btn-danger btn-sm px-3">Reject</button>
       </form>
     </div>
   {% endfor %}
 </div>
 {% endif %}
 
-<!-- Create Venue & Create Event -->
-<div class="row g-3 mb-4">
+<!-- Create Venue & Create Event (Well-Spaced Forms) -->
+<div class="row g-4 mb-4">
+  <!-- Add New Venue Card -->
   <div class="col-12 col-lg-5">
-    <div class="card p-3">
-      <h5 class="fw-bold">Add New Venue</h5>
+    <div class="dashboard-card p-4 h-100">
+      <h5 class="dashboard-section-title mb-1">Add New Venue</h5>
+      <p class="text-muted small mb-3">Register campus halls and outdoor spaces for scheduling</p>
       <form method="post" action="/admin/venues">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <input type="text" name="name" class="form-control mb-2" placeholder="Venue Name" required>
-        <input type="text" name="location" class="form-control mb-2" placeholder="Location" required>
-        <div class="row g-2 mb-2">
-          <div class="col"><input type="number" name="capacity" class="form-control" placeholder="Capacity" required></div>
-          <div class="col"><input type="number" step="0.01" name="hourly_rate" class="form-control" placeholder="Hourly Rate (LKR)" required></div>
+
+        <div class="mb-3">
+          <label class="field-label">Venue Name</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g., Main University Auditorium" required>
         </div>
-        <input type="url" name="image_url" class="form-control mb-2" placeholder="Venue Image URL (https://...)">
-        <input type="text" name="description" class="form-control mb-2" placeholder="Description">
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="checkbox" name="is_private_hire_open" value="1" checked>
-          <label class="form-check-label small">Open for Private Hire</label>
+
+        <div class="mb-3">
+          <label class="field-label">Location / Block</label>
+          <input type="text" name="location" class="form-control" placeholder="e.g., Faculty of Applied Science" required>
         </div>
-        <button class="btn btn-dark w-100 btn-sm">Create Venue</button>
+
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="field-label">Max Capacity</label>
+            <input type="number" name="capacity" class="form-control" placeholder="e.g., 300" required>
+          </div>
+          <div class="col-6">
+            <label class="field-label">Hourly Rate (LKR)</label>
+            <input type="number" step="0.01" name="hourly_rate" class="form-control" placeholder="e.g., 15000.00" required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="field-label">Venue Image URL (Optional)</label>
+          <input type="url" name="image_url" class="form-control" placeholder="https://example.com/venue.jpg">
+        </div>
+
+        <div class="mb-3">
+          <label class="field-label">Facilities & Description</label>
+          <input type="text" name="description" class="form-control" placeholder="Projector, AC, Sound System">
+        </div>
+
+        <div class="form-check mb-4">
+          <input class="form-check-input" type="checkbox" name="is_private_hire_open" value="1" id="privateHireCheck" checked>
+          <label class="form-check-label small fw-medium" for="privateHireCheck">Available for Private Venue Hire</label>
+        </div>
+
+        <button class="btn btn-dark w-100 py-2 fw-semibold">Create Venue</button>
       </form>
     </div>
   </div>
 
+  <!-- Create Event Card -->
   <div class="col-12 col-lg-7">
-    <div class="card p-3">
-      <h5 class="fw-bold">Create Event</h5>
+    <div class="dashboard-card p-4 h-100">
+      <h5 class="dashboard-section-title mb-1">Create & Publish Event</h5>
+      <p class="text-muted small mb-3">Validated automatically by VenueAgent (includes 60-minute turnaround buffer)</p>
       <form method="post" action="/admin/events" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <div class="row g-2 mb-2">
-          <div class="col-8"><input type="text" name="title" class="form-control" placeholder="Event Title" required></div>
-          <div class="col-4">
+
+        <div class="row g-3 mb-3">
+          <div class="col-12 col-md-8">
+            <label class="field-label">Event Title</label>
+            <input type="text" name="title" class="form-control" placeholder="e.g., Annual AI & Multi-Agent Symposium 2026" required>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="field-label">Category</label>
             <select name="category" class="form-select">
-              <option>Conference</option><option>Concert</option><option>Workshop</option><option>Seminar</option>
+              <option>Conference</option>
+              <option>Concert</option>
+              <option>Workshop</option>
+              <option>Seminar</option>
             </select>
           </div>
         </div>
-        <div class="row g-2 mb-2">
-          <div class="col-6">
+
+        <div class="row g-3 mb-3">
+          <div class="col-12 col-md-7">
+            <label class="field-label">Select Venue</label>
             <select name="venue_id" class="form-select">
-              {% for v in venues %}<option value="{{ v.id }}">{{ v.name }} (Cap: {{ v.capacity }})</option>{% endfor %}
+              {% for v in venues %}
+                <option value="{{ v.id }}">{{ v.name }} (Cap: {{ v.capacity }})</option>
+              {% endfor %}
             </select>
           </div>
-          <div class="col-6">
+          <div class="col-12 col-md-5">
+            <label class="field-label">Publication Status</label>
             <select name="status" class="form-select">
-              <option value="published">Publish Now</option><option value="draft">Save as Draft</option>
+              <option value="published">Publish Now</option>
+              <option value="draft">Save as Draft</option>
             </select>
           </div>
         </div>
-        <div class="row g-2 mb-2">
-          <div class="col-6"><label class="small">Start</label><input type="datetime-local" name="start_time" class="form-control" required></div>
-          <div class="col-6"><label class="small">End</label><input type="datetime-local" name="end_time" class="form-control" required></div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-12 col-md-6">
+            <label class="field-label">Start Date & Time</label>
+            <input type="datetime-local" name="start_time" class="form-control" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="field-label">End Date & Time</label>
+            <input type="datetime-local" name="end_time" class="form-control" required>
+          </div>
         </div>
-        <div class="row g-2 mb-2">
-          <div class="col-4"><input type="text" name="tier_name" class="form-control" placeholder="Ticket Tier (e.g. VIP)" required></div>
-          <div class="col-4"><input type="number" step="0.01" name="tier_price" class="form-control" placeholder="Price (LKR)" required></div>
-          <div class="col-4"><input type="number" name="tier_qty" class="form-control" placeholder="Quantity" required></div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-12 col-md-4">
+            <label class="field-label">Initial Ticket Tier</label>
+            <input type="text" name="tier_name" class="form-control" placeholder="e.g., General / VIP" required>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="field-label">Ticket Price (LKR)</label>
+            <input type="number" step="0.01" name="tier_price" class="form-control" placeholder="e.g., 1000.00" required>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="field-label">Seat Quantity</label>
+            <input type="number" name="tier_qty" class="form-control" placeholder="e.g., 100" required>
+          </div>
         </div>
-        <div class="mb-2">
-          <input type="text" name="description" class="form-control" placeholder="Event Description (optional)">
+
+        <div class="mb-3">
+          <label class="field-label">Event Description (Optional)</label>
+          <input type="text" name="description" class="form-control" placeholder="Brief summary of speakers, agenda, or entry rules">
         </div>
-        <div class="mb-2">
-          <label class="small text-muted">Upload Event Image (Optional — defaults to venue photo)</label>
-          <input type="file" name="image_file" accept="image/*" class="form-control form-control-sm">
+
+        <div class="mb-4">
+          <label class="field-label">Event Banner Image (Optional &mdash; defaults to venue photo)</label>
+          <input type="file" name="image_file" accept="image/*" class="form-control">
         </div>
-        <button class="btn btn-primary w-100 btn-sm">Submit Event to VenueAgent</button>
+
+        <button class="btn btn-primary w-100 py-2 fw-semibold">Submit Event to VenueAgent</button>
       </form>
     </div>
   </div>
 </div>
 
-<!-- Persistent Agent Beliefs -->
-<div class="card p-3 mb-4">
-  <h5 class="fw-bold">Persistent Agent Beliefs (Database State)</h5>
-  <div class="d-flex flex-wrap gap-2">
+<!-- Persistent Agent Beliefs (Proper Card Grid Format) -->
+<div class="dashboard-card p-4 mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <div>
+      <h5 class="dashboard-section-title mb-1">Persistent Agent Beliefs (Database State)</h5>
+      <p class="text-muted small mb-0">Live internal state counters maintained by each autonomous agent in PostgreSQL</p>
+    </div>
+    <span class="badge bg-light text-dark border px-3 py-2">{{ beliefs|length }} Active Belief Keys</span>
+  </div>
+
+  <div class="row g-3">
     {% for b in beliefs %}
-      <span class="badge bg-light text-dark border">{{ b.agent_name }}.{{ b.key }} = {{ b.value_json }}</span>
+      {% set agent_class = '' %}
+      {% if 'Ticket' in b.agent_name %}{% set agent_class = 'agent-ticket' %}
+      {% elif 'Venue' in b.agent_name %}{% set agent_class = 'agent-venue' %}
+      {% elif 'Notification' in b.agent_name %}{% set agent_class = 'agent-notification' %}
+      {% elif 'Waitlist' in b.agent_name %}{% set agent_class = 'agent-waitlist' %}
+      {% endif %}
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="belief-card {{ agent_class }}">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="badge bg-dark-subtle text-dark fw-semibold" style="font-size: 0.72rem;">{{ b.agent_name }}</span>
+          </div>
+          <div class="text-muted small fw-medium mb-1">{{ b.key | replace('_', ' ') | title }}</div>
+          <div class="belief-value">{{ b.value_json }}</div>
+        </div>
+      </div>
     {% endfor %}
   </div>
 </div>
 
 <!-- Traceable Agent Message Log -->
-<div class="card p-3">
-  <h5 class="fw-bold">Agent Message Bus Traceability Log</h5>
+<div class="dashboard-card p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h5 class="dashboard-section-title mb-1">Agent Message Bus Traceability Log</h5>
+      <p class="text-muted small mb-0">Auditable inter-agent communication log across all system transactions</p>
+    </div>
+    <span class="badge bg-light text-dark border px-3 py-2">Latest {{ logs|length }} Messages</span>
+  </div>
+
   <div class="table-responsive">
-    <table class="table table-sm table-striped small">
+    <table class="table table-modern table-hover small align-middle mb-0">
       <thead>
-        <tr><th>Conv ID</th><th>Sender</th><th>Receiver</th><th>Performative</th><th>Action</th><th>Content</th></tr>
+        <tr>
+          <th>Conv ID</th>
+          <th>Sender</th>
+          <th>Receiver</th>
+          <th>Performative</th>
+          <th>Action</th>
+          <th>Payload Content</th>
+        </tr>
       </thead>
       <tbody>
         {% for log in logs %}
         <tr>
-          <td><code>{{ log.conversation_id }}</code></td>
-          <td><strong>{{ log.sender }}</strong></td>
+          <td><code class="text-primary">{{ log.conversation_id }}</code></td>
+          <td><strong class="text-dark">{{ log.sender }}</strong></td>
           <td>{{ log.receiver }}</td>
-          <td><span class="badge bg-primary badge-perf">{{ log.performative }}</span></td>
-          <td>{{ log.action }}</td>
-          <td style="max-width: 340px; word-break: break-word;"><code>{{ log.content_json }}</code></td>
+          <td>
+            {% if log.performative == 'AGREE' %}
+              <span class="badge bg-success">{{ log.performative }}</span>
+            {% elif log.performative == 'REFUSE' or log.performative == 'FAILURE' %}
+              <span class="badge bg-danger">{{ log.performative }}</span>
+            {% elif log.performative == 'INFORM' %}
+              <span class="badge bg-info text-dark">{{ log.performative }}</span>
+            {% else %}
+              <span class="badge bg-primary">{{ log.performative }}</span>
+            {% endif %}
+          </td>
+          <td class="fw-semibold text-dark">{{ log.action }}</td>
+          <td style="max-width: 360px; word-break: break-word;">
+            <code class="text-secondary">{{ log.content_json }}</code>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
