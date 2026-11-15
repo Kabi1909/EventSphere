@@ -1,185 +1,207 @@
+from typing import Any
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
 from sqlalchemy.orm import Session
-from app.models import Venue, Event, VenueHireRequest
+from app.models import Event, Venue, VenueHireRequest
 from app.agents.base import BaseAgent
 from app.agents.protocol import AgentMessage, Performative
 
+
 class VenueAgent(BaseAgent):
     name = "VenueAgent"
-    BUFFER_MINUTES = 60
-    MAX_AUTO_GUESTS = 150
-    MAX_AUTO_HOURS = 4.0
+    TURNAROUND_MINUTES = 60
+    AUTO_CONFIRM_MAX_HOURS = 4.0
+    AUTO_CONFIRM_MAX_GUESTS = 150
 
-    def _check_conflicts(
-        self, db: Session, venue_id: int, start: datetime, end: datetime, ignore_event_id: int = None
-    ) -> List[str]:
-        buf = timedelta(minutes=self.BUFFER_MINUTES)
-        req_start = start - buf
-        req_end = end + buf
-        conflicts = []
+    def _has_clash(self, db: Session, venue_id: int, start_time: datetime, end_time: datetime) -> str | None:
+        buffer = timedelta(minutes=self.TURNAROUND_MINUTES)
+        req_start = start_time - buffer
+        req_end = end_time + buffer
 
         events = db.query(Event).filter(
             Event.venue_id == venue_id,
             Event.status != "cancelled",
         ).all()
         for ev in events:
-            if ignore_event_id and ev.id == ignore_event_id:
-                continue
-            if req_start < ev.end_time and req_end > ev.start_time:
-                conflicts.append(
-                    f"Event '{ev.title}' ({ev.start_time.strftime('%Y-%m-%d %H:%M')} - {ev.end_time.strftime('%H:%M')} + 60m buffer)"
+            if ev.start_time < req_end and ev.end_time > req_start:
+                return (
+                    f"Venue clash detected (includes {self.TURNAROUND_MINUTES}-min turnaround buffer): "
+                    f"Event '{ev.title}' ({ev.start_time.strftime('%Y-%m-%d %H:%M')} - "
+                    f"{ev.end_time.strftime('%H:%M')} + {self.TURNAROUND_MINUTES}m buffer)"
                 )
 
         hires = db.query(VenueHireRequest).filter(
             VenueHireRequest.venue_id == venue_id,
-            VenueHireRequest.status.in_(["confirmed", "escalated"]),
+            VenueHireRequest.status == "confirmed",
         ).all()
-        for h in hires:
-            if req_start < h.end_time and req_end > h.start_time:
-                conflicts.append(
-                    f"Private Hire #{h.id} ({h.start_time.strftime('%Y-%m-%d %H:%M')} - {h.end_time.strftime('%H:%M')} + 60m buffer)"
+        for hr in hires:
+            if hr.start_time < req_end and hr.end_time > req_start:
+                return (
+                    f"Venue clash detected with confirmed private hire ({hr.start_time.strftime('%Y-%m-%d %H:%M')} - "
+                    f"{hr.end_time.strftime('%H:%M')} + {self.TURNAROUND_MINUTES}m buffer)"
                 )
-        return conflicts
-
-    def _calculate_price(self, venue: Venue, start: datetime, end: datetime) -> tuple[float, float]:
-        hours = max(1.0, (end - start).total_seconds() / 3600.0)
-        # Weekend (Fri=4, Sat=5, Sun=6) or evening (>=17:00) peak pricing: 1.25x
-        is_peak = start.weekday() in (4, 5, 6) or start.hour >= 17
-        multiplier = 1.25 if is_peak else 1.0
-        return round(venue.hourly_rate * hours * multiplier, 2), multiplier
-
-    def _generate_alternatives(
-        self, db: Session, venue: Venue, start: datetime, end: datetime, guest_count: int
-    ) -> List[Dict[str, Any]]:
-        alternatives = []
-        duration = end - start
-
-        # Alternative 1 & 2: Shift time (+3 hours, +1 day) on same venue
-        for delta in [timedelta(hours=3), timedelta(days=1)]:
-            alt_start = start + delta
-            alt_end = alt_start + duration
-            if not self._check_conflicts(db, venue.id, alt_start, alt_end):
-                price, mult = self._calculate_price(venue, alt_start, alt_end)
-                alternatives.append({
-                    "type": "alternative_time",
-                    "venue_id": venue.id,
-                    "venue_name": venue.name,
-                    "start_time": alt_start.strftime("%Y-%m-%d %H:%M"),
-                    "end_time": alt_end.strftime("%Y-%m-%d %H:%M"),
-                    "quoted_price": price,
-                    "note": f"Same venue at a conflict-free time ({'Peak 1.25x' if mult > 1 else 'Standard rate'})"
-                })
-
-        # Alternative 3: Different open venue with sufficient capacity at requested time
-        other_venues = db.query(Venue).filter(
-            Venue.id != venue.id,
-            Venue.is_private_hire_open == True,
-            Venue.capacity >= guest_count
-        ).all()
-        for ov in other_venues:
-            if not self._check_conflicts(db, ov.id, start, end):
-                price, mult = self._calculate_price(ov, start, end)
-                alternatives.append({
-                    "type": "alternative_venue",
-                    "venue_id": ov.id,
-                    "venue_name": ov.name,
-                    "start_time": start.strftime("%Y-%m-%d %H:%M"),
-                    "end_time": end.strftime("%Y-%m-%d %H:%M"),
-                    "quoted_price": price,
-                    "note": f"Available at your exact requested time (Capacity: {ov.capacity})"
-                })
-                break
-
-        return alternatives
+        return None
 
     def handle_message(self, db: Session, msg: AgentMessage, bus: Any) -> AgentMessage:
-        if msg.action == "CHECK_EVENT_SLOT":
+        if msg.action == "VALIDATE_EVENT_VENUE":
             venue_id = int(msg.content["venue_id"])
-            start = datetime.fromisoformat(msg.content["start_time"])
-            end = datetime.fromisoformat(msg.content["end_time"])
-            ignore_id = msg.content.get("ignore_event_id")
+            start_time = datetime.fromisoformat(msg.content["start_time"])
+            end_time = datetime.fromisoformat(msg.content["end_time"])
 
             venue = db.query(Venue).filter_by(id=venue_id).first()
             if not venue:
-                return self.reply(msg, Performative.REFUSE, {"reason": "Venue does not exist."})
-            if end <= start:
-                return self.reply(msg, Performative.REFUSE, {"reason": "End time must be after start time."})
-
-            conflicts = self._check_conflicts(db, venue_id, start, end, ignore_id)
-            if conflicts:
-                self.increment_belief(db, "slots_refused")
-                return self.reply(
-                    msg,
-                    Performative.REFUSE,
-                    {"reason": f"Venue clash detected (includes 60-min turnaround buffer): {'; '.join(conflicts)}"},
+                return AgentMessage(
+                    conversation_id=msg.conversation_id,
+                    sender=self.name,
+                    receiver=msg.sender,
+                    performative=Performative.REFUSE,
+                    action="VALIDATE_EVENT_VENUE",
+                    content={"reason": "Selected venue does not exist."},
                 )
 
-            self.increment_belief(db, "slots_approved")
-            return self.reply(msg, Performative.AGREE, {"reason": "Venue slot is free with 60-minute buffer."})
+            if end_time <= start_time:
+                return AgentMessage(
+                    conversation_id=msg.conversation_id,
+                    sender=self.name,
+                    receiver=msg.sender,
+                    performative=Performative.REFUSE,
+                    action="VALIDATE_EVENT_VENUE",
+                    content={"reason": "End time must be after start time."},
+                )
+
+            clash = self._has_clash(db, venue_id, start_time, end_time)
+            if clash:
+                self.set_belief(db, "clashes_prevented", self.get_belief(db, "clashes_prevented", 0) + 1)
+                return AgentMessage(
+                    conversation_id=msg.conversation_id,
+                    sender=self.name,
+                    receiver=msg.sender,
+                    performative=Performative.REFUSE,
+                    action="VALIDATE_EVENT_VENUE",
+                    content={"reason": clash},
+                )
+
+            return AgentMessage(
+                conversation_id=msg.conversation_id,
+                sender=self.name,
+                receiver=msg.sender,
+                performative=Performative.AGREE,
+                action="VALIDATE_EVENT_VENUE",
+                content={"venue_name": venue.name, "reason": "Venue available with 60-min turnaround buffer."},
+            )
 
         elif msg.action == "REQUEST_PRIVATE_HIRE":
+            user_id = int(msg.content["user_id"])
             venue_id = int(msg.content["venue_id"])
-            start = datetime.fromisoformat(msg.content["start_time"])
-            end = datetime.fromisoformat(msg.content["end_time"])
-            guest_count = int(msg.content["guest_count"])
+            start_time = datetime.fromisoformat(msg.content["start_time"])
+            end_time = datetime.fromisoformat(msg.content["end_time"])
+            purpose = msg.content.get("purpose", "").strip()
+            guest_count = int(msg.content.get("guest_count", 1))
 
             venue = db.query(Venue).filter_by(id=venue_id).first()
             if not venue or not venue.is_private_hire_open:
-                return self.reply(msg, Performative.REFUSE, {"reason": "Selected venue is not open for private hire."})
-            if end <= start:
-                return self.reply(msg, Performative.REFUSE, {"reason": "End time must be after start time."})
+                return AgentMessage(
+                    conversation_id=msg.conversation_id,
+                    sender=self.name,
+                    receiver=msg.sender,
+                    performative=Performative.REFUSE,
+                    action="REQUEST_PRIVATE_HIRE",
+                    content={"reason": "Venue is not available for private hire."},
+                )
+
+            if end_time <= start_time:
+                return AgentMessage(
+                    conversation_id=msg.conversation_id,
+                    sender=self.name,
+                    receiver=msg.sender,
+                    performative=Performative.REFUSE,
+                    action="REQUEST_PRIVATE_HIRE",
+                    content={"reason": "End time must be after start time."},
+                )
+
             if guest_count > venue.capacity:
-                alts = self._generate_alternatives(db, venue, start, end, guest_count)
-                return self.reply(
-                    msg,
-                    Performative.PROPOSE,
-                    {
-                        "reason": f"Guest count ({guest_count}) exceeds {venue.name} capacity ({venue.capacity}).",
-                        "alternatives": alts,
-                    },
+                return AgentMessage(
+                    conversation_id=msg.conversation_id,
+                    sender=self.name,
+                    receiver=msg.sender,
+                    performative=Performative.REFUSE,
+                    action="REQUEST_PRIVATE_HIRE",
+                    content={"reason": f"Guest count ({guest_count}) exceeds venue capacity ({venue.capacity})."},
                 )
 
-            conflicts = self._check_conflicts(db, venue_id, start, end)
-            if conflicts:
-                self.increment_belief(db, "hires_counter_proposed")
-                alts = self._generate_alternatives(db, venue, start, end, guest_count)
-                return self.reply(
-                    msg,
-                    Performative.PROPOSE,
-                    {
-                        "reason": f"Requested slot conflicts with: {'; '.join(conflicts)}.",
-                        "alternatives": alts,
-                    },
+            clash = self._has_clash(db, venue_id, start_time, end_time)
+            if clash:
+                self.set_belief(db, "clashes_prevented", self.get_belief(db, "clashes_prevented", 0) + 1)
+                return AgentMessage(
+                    conversation_id=msg.conversation_id,
+                    sender=self.name,
+                    receiver=msg.sender,
+                    performative=Performative.REFUSE,
+                    action="REQUEST_PRIVATE_HIRE",
+                    content={"reason": clash},
                 )
 
-            price, multiplier = self._calculate_price(venue, start, end)
-            hours = (end - start).total_seconds() / 3600.0
-            rate_label = "Peak/Weekend rate (1.25x)" if multiplier > 1.0 else "Standard rate (1.0x)"
+            # Standard flat hourly pricing (1.0x — peak/weekend surge pricing removed)
+            duration_hours = round((end_time - start_time).total_seconds() / 3600.0, 2)
+            quoted_price = round(duration_hours * float(venue.hourly_rate), 2)
 
-            # Decision rule: Routine hires (<= 150 guests and <= 4 hours) auto-confirm; larger/longer escalate to Admin
-            if guest_count <= self.MAX_AUTO_GUESTS and hours <= self.MAX_AUTO_HOURS:
-                self.increment_belief(db, "hires_auto_confirmed")
-                return self.reply(
-                    msg,
-                    Performative.AGREE,
-                    {
-                        "status": "confirmed",
-                        "quoted_price": price,
-                        "reason": f"Auto-confirmed routine private hire ({hours:.1f} hrs @ {rate_label}).",
-                    },
-                )
+            if duration_hours <= self.AUTO_CONFIRM_MAX_HOURS and guest_count <= self.AUTO_CONFIRM_MAX_GUESTS:
+                status = "confirmed"
+                reason = f"Auto-confirmed routine private hire ({duration_hours} hrs @ Standard rate)."
+                self.set_belief(db, "hires_auto_confirmed", self.get_belief(db, "hires_auto_confirmed", 0) + 1)
             else:
-                self.increment_belief(db, "hires_escalated")
-                return self.reply(
-                    msg,
-                    Performative.PROPOSE,
-                    {
-                        "status": "escalated",
-                        "quoted_price": price,
-                        "reason": f"Large/extended hire ({guest_count} guests, {hours:.1f} hrs) escalated for Admin approval. Quoted at {rate_label}.",
-                        "alternatives": [],
-                    },
-                )
+                status = "escalated"
+                reason = f"Escalated to Admin for approval ({duration_hours} hrs, {guest_count} guests)."
+                self.set_belief(db, "hires_escalated", self.get_belief(db, "hires_escalated", 0) + 1)
 
-        return self.reply(msg, Performative.FAILURE, {"reason": f"Unsupported action {msg.action}"})
+            hire = VenueHireRequest(
+                user_id=user_id,
+                venue_id=venue_id,
+                start_time=start_time,
+                end_time=end_time,
+                purpose=purpose,
+                guest_count=guest_count,
+                quoted_price=quoted_price,
+                status=status,
+                agent_notes=reason,
+            )
+            db.add(hire)
+            db.flush()
+
+            bus.send(
+                db,
+                AgentMessage(
+                    conversation_id=msg.conversation_id,
+                    sender=self.name,
+                    receiver="ALL",
+                    performative=Performative.INFORM,
+                    action="HIRE_DECISION",
+                    content={
+                        "user_id": user_id,
+                        "venue_name": venue.name,
+                        "status": status,
+                        "reason": reason,
+                    },
+                ),
+            )
+
+            return AgentMessage(
+                conversation_id=msg.conversation_id,
+                sender=self.name,
+                receiver=msg.sender,
+                performative=Performative.AGREE,
+                action="REQUEST_PRIVATE_HIRE",
+                content={
+                    "status": status,
+                    "quoted_price": quoted_price,
+                    "reason": reason,
+                },
+            )
+
+        return AgentMessage(
+            conversation_id=msg.conversation_id,
+            sender=self.name,
+            receiver=msg.sender,
+            performative=Performative.FAILURE,
+            action=msg.action,
+            content={"reason": f"Unknown action: {msg.action}"},
+        ) 

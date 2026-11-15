@@ -6,8 +6,7 @@ from typing import Optional
 from contextlib import asynccontextmanager
 
 import qrcode
-from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, Depends, Request, Form, HTTPException, UploadFile, File 
+from fastapi import FastAPI, Depends, Request, Form, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -17,21 +16,13 @@ from sqlalchemy import func
 from app.database import engine, Base, get_db, SessionLocal
 from app.models import (
     User, Venue, Event, TicketTier, Booking, Ticket,
-    VenueHireRequest, WaitlistEntry, Notification, AgentMessageLog, AgentBelief
+    VenueHireRequest, Notification, AgentMessageLog, AgentBelief
 )
 from app.security import SECRET_KEY, hash_password, verify_password, get_csrf_token, validate_csrf
 from app.agents.protocol import AgentMessage, Performative
-from app.agents.registry import bus, waitlist_agent
+from app.agents.registry import bus
 from app.seed import seed_database
 
-scheduler = BackgroundScheduler()
-
-def scheduled_waitlist_sweep():
-    db = SessionLocal()
-    try:
-        waitlist_agent.run_expiry_sweep(db, bus)
-    finally:
-        db.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,16 +32,13 @@ async def lifespan(app: FastAPI):
         seed_database(db)
     finally:
         db.close()
-    if not scheduler.running:
-        scheduler.add_job(scheduled_waitlist_sweep, "interval", seconds=30, id="waitlist_sweep", replace_existing=True)
-        scheduler.start()
     yield
-    if scheduler.running:
-        scheduler.shutdown(wait=False)
+
 
 app = FastAPI(title="EventSphere Multi-Agent Platform", lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax")
 templates = Jinja2Templates(directory="app/templates")
+
 
 def make_qr_base64(data: str) -> str:
     img = qrcode.make(data)
@@ -58,17 +46,20 @@ def make_qr_base64(data: str) -> str:
     img.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode("utf-8")
 
+
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
     uid = request.session.get("user_id")
     if not uid:
         return None
     return db.query(User).filter_by(id=uid).first()
 
+
 def require_role(user: Optional[User], roles: list[str]):
     if not user:
         raise HTTPException(status_code=401, detail="Please sign in first.")
     if user.role not in roles:
         raise HTTPException(status_code=403, detail=f"Access denied. Required role: {', '.join(roles)}")
+
 
 def ctx(request: Request, db: Session, user: Optional[User], **kwargs):
     unread = 0
@@ -80,18 +71,12 @@ def ctx(request: Request, db: Session, user: Optional[User], **kwargs):
         "unread_count": unread,
         "flash": request.session.pop("flash", None),
         **kwargs,
-    } 
+    }
+
 
 def set_flash(request: Request, msg: str, category: str = "info"):
     request.session["flash"] = {"msg": msg, "category": category}
 
-# -------------------- AGENT HTTP INBOX ENDPOINT (PART C) --------------------
-@app.post("/api/agents/inbox", tags=["Multi-Agent Bus"])
-def agent_http_inbox(msg: AgentMessage, db: Session = Depends(get_db)):
-    """Direct HTTP JSON inbox allowing external or peer agents to send FIPA-style performative messages."""
-    reply = bus.send(db, msg)
-    db.commit()
-    return reply
 
 # -------------------- PUBLIC & AUTH ROUTES --------------------
 @app.get("/", response_class=HTMLResponse)
@@ -111,9 +96,11 @@ def home(
     categories = ["Concert", "Workshop", "Seminar", "Conference"]
     return templates.TemplateResponse(request, "index.html", ctx(request, db, user, events=events, q=q, category=category, categories=categories))
 
+
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(get_current_user)):
-    return templates.TemplateResponse(request, "login.html", ctx(request, db, user)) 
+    return templates.TemplateResponse(request, "login.html", ctx(request, db, user))
+
 
 @app.post("/login")
 def login_submit(
@@ -136,9 +123,11 @@ def login_submit(
         return RedirectResponse("/staff/scanner", status_code=303)
     return RedirectResponse("/", status_code=303)
 
+
 @app.get("/register", response_class=HTMLResponse)
 def register_page(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(get_current_user)):
-    return templates.TemplateResponse(request, "register.html", ctx(request, db, user)) 
+    return templates.TemplateResponse(request, "register.html", ctx(request, db, user))
+
 
 @app.post("/register")
 def register_submit(
@@ -161,12 +150,14 @@ def register_submit(
     set_flash(request, "Account created! Welcome to EventSphere.", "success")
     return RedirectResponse("/", status_code=303)
 
+
 @app.get("/logout")
 def logout(request: Request):
     request.session.clear()
     return RedirectResponse("/", status_code=303)
 
-# -------------------- EVENT DETAILS, BOOKING & WAITLIST --------------------
+
+# -------------------- EVENT DETAILS & BOOKING --------------------
 @app.get("/events/{event_id}", response_class=HTMLResponse)
 def event_detail(
     event_id: int,
@@ -177,10 +168,8 @@ def event_detail(
     event = db.query(Event).filter_by(id=event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
-    user_offers = []
-    if user:
-        user_offers = db.query(WaitlistEntry).filter_by(user_id=user.id, event_id=event_id, status="offered").all()
-    return templates.TemplateResponse(request, "event_detail.html", ctx(request, db, user, event=event, user_offers=user_offers))
+    return templates.TemplateResponse(request, "event_detail.html", ctx(request, db, user, event=event, user_offers=[]))
+
 
 @app.post("/events/{event_id}/book")
 def book_tickets(
@@ -220,34 +209,6 @@ def book_tickets(
         set_flash(request, f"BookingAgent Refused: {reply.content.get('reason')}", "danger")
         return RedirectResponse(f"/events/{event_id}", status_code=303)
 
-@app.post("/events/{event_id}/waitlist")
-def join_waitlist(
-    event_id: int,
-    request: Request,
-    tier_id: int = Form(...),
-    quantity: int = Form(1),
-    csrf_token: str = Form(...),
-    db: Session = Depends(get_db),
-    user: Optional[User] = Depends(get_current_user),
-):
-    validate_csrf(request, csrf_token)
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-
-    msg = AgentMessage(
-        sender=f"User:{user.id}",
-        receiver="WaitlistAgent",
-        performative=Performative.REQUEST,
-        action="JOIN_WAITLIST",
-        content={"user_id": user.id, "event_id": event_id, "tier_id": tier_id, "quantity": quantity},
-    )
-    reply = bus.send(db, msg)
-    db.commit()
-    if reply.performative == Performative.AGREE:
-        set_flash(request, "You have been added to the waitlist! We will hold seats for 15 mins when freed.", "success")
-    else:
-        set_flash(request, reply.content.get("reason", "Could not join waitlist."), "warning")
-    return RedirectResponse(f"/events/{event_id}", status_code=303)
 
 @app.get("/my-bookings", response_class=HTMLResponse)
 def my_bookings(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(get_current_user)):
@@ -255,12 +216,12 @@ def my_bookings(request: Request, db: Session = Depends(get_db), user: Optional[
         return RedirectResponse("/login", status_code=303)
     require_role(user, ["attendee"])
     bookings = db.query(Booking).filter_by(user_id=user.id).order_by(Booking.created_at.desc()).all()
-    waitlists = db.query(WaitlistEntry).filter_by(user_id=user.id).order_by(WaitlistEntry.created_at.desc()).all()
     qr_map = {}
     for b in bookings:
         for t in b.tickets:
             qr_map[t.id] = make_qr_base64(t.code)
-    return templates.TemplateResponse(request, "my_bookings.html", ctx(request, db, user, bookings=bookings, waitlists=waitlists, qr_map=qr_map))
+    return templates.TemplateResponse(request, "my_bookings.html", ctx(request, db, user, bookings=bookings, waitlists=[], qr_map=qr_map))
+
 
 @app.post("/bookings/{booking_id}/cancel")
 def cancel_booking(
@@ -288,6 +249,7 @@ def cancel_booking(
         set_flash(request, f"Cancellation Refused: {reply.content.get('reason')}", "danger")
     return RedirectResponse("/my-bookings", status_code=303)
 
+
 # -------------------- PRIVATE VENUE HIRE --------------------
 @app.get("/venue-hire", response_class=HTMLResponse)
 def venue_hire_page(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(get_current_user)):
@@ -300,6 +262,7 @@ def venue_hire_page(request: Request, db: Session = Depends(get_db), user: Optio
     for h in my_hires:
         parsed_hires.append((h, json.loads(h.alternatives_json or "[]")))
     return templates.TemplateResponse(request, "venue_hire.html", ctx(request, db, user, venues=venues, hires=parsed_hires))
+
 
 @app.post("/venue-hire")
 def submit_venue_hire(
@@ -384,6 +347,7 @@ def submit_venue_hire(
         set_flash(request, "Slot unavailable — VenueAgent proposed alternative times/venues below!", "warning")
     return RedirectResponse("/venue-hire", status_code=303)
 
+
 @app.get("/notifications", response_class=HTMLResponse)
 def notifications_page(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(get_current_user)):
     if not user:
@@ -394,6 +358,7 @@ def notifications_page(request: Request, db: Session = Depends(get_db), user: Op
     db.commit()
     return templates.TemplateResponse(request, "notifications.html", ctx(request, db, user, notes=notes))
 
+
 # -------------------- STAFF GATE SCANNER --------------------
 @app.get("/staff/scanner", response_class=HTMLResponse)
 def scanner_page(
@@ -402,10 +367,11 @@ def scanner_page(
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
-    require_role(user, ["staff"]) 
+    require_role(user, ["staff"])
     events = db.query(Event).filter(Event.status == "published").order_by(Event.start_time.asc()).all()
     selected_id = event_id or (events[0].id if events else None)
-    return templates.TemplateResponse(request, "scanner.html", ctx(request, db, user, events=events, selected_id=selected_id, scan_result=None)) 
+    return templates.TemplateResponse(request, "scanner.html", ctx(request, db, user, events=events, selected_id=selected_id, scan_result=None))
+
 
 @app.post("/staff/scanner", response_class=HTMLResponse)
 def scan_ticket_submit(
@@ -435,7 +401,8 @@ def scan_ticket_submit(
         "performative": reply.performative.value,
         **reply.content,
     }
-    return templates.TemplateResponse(request, "scanner.html", ctx(request, db, user, events=events, selected_id=event_id, scan_result=scan_result)) 
+    return templates.TemplateResponse(request, "scanner.html", ctx(request, db, user, events=events, selected_id=event_id, scan_result=scan_result))
+
 
 # -------------------- ADMIN DASHBOARD, VENUES, EVENTS & HIRES --------------------
 @app.get("/admin", response_class=HTMLResponse)
@@ -462,6 +429,7 @@ def admin_dashboard(request: Request, db: Session = Depends(get_db), user: Optio
         "admin_dashboard.html",
         ctx(request, db, user, event_stats=event_stats, venues=venues, escalated_hires=escalated_hires, logs=logs, beliefs=beliefs),
     )
+
 
 @app.post("/admin/venues")
 def admin_create_venue(
@@ -492,6 +460,7 @@ def admin_create_venue(
     db.commit()
     set_flash(request, f"Venue '{name}' created.", "success")
     return RedirectResponse("/admin", status_code=303)
+
 
 @app.post("/admin/events")
 async def admin_create_event(
@@ -557,7 +526,37 @@ async def admin_create_event(
     db.add(TicketTier(event_id=ev.id, name=tier_name, price=tier_price, total_qty=tier_qty, remaining_qty=tier_qty))
     db.commit()
     set_flash(request, f"Event '{title}' created ({status}).", "success")
-    return RedirectResponse("/admin", status_code=303) 
+    return RedirectResponse("/admin", status_code=303)
+
+
+@app.post("/admin/events/{event_id}/status")
+def admin_update_event_status(
+    event_id: int,
+    request: Request,
+    new_status: str = Form(...),
+    csrf_token: str = Form(...),
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user),
+):
+    validate_csrf(request, csrf_token)
+    require_role(user, ["admin"])
+    ev = db.query(Event).filter_by(id=event_id).first()
+    if not ev:
+        raise HTTPException(status_code=404)
+    ev.status = new_status
+    if new_status == "cancelled":
+        msg = AgentMessage(
+            sender=f"Admin:{user.id}",
+            receiver="BookingAgent",
+            performative=Performative.REQUEST,
+            action="EVENT_CANCELLED_REFUNDS",
+            content={"event_id": ev.id},
+        )
+        bus.send(db, msg)
+    db.commit()
+    set_flash(request, f"Event status updated to {new_status}.", "info")
+    return RedirectResponse("/admin", status_code=303)
+
 
 @app.post("/admin/events/{event_id}/edit")
 def admin_edit_event(
@@ -587,6 +586,7 @@ def admin_edit_event(
     db.commit()
     set_flash(request, f"Event '{ev.title}' updated successfully.", "success")
     return RedirectResponse("/admin", status_code=303)
+
 
 @app.post("/admin/hires/{hire_id}/decide")
 def admin_decide_hire(
@@ -620,4 +620,4 @@ def admin_decide_hire(
     )
     db.commit()
     set_flash(request, f"Hire request #{hire.id} marked {hire.status}.", "success")
-    return RedirectResponse("/admin", status_code=303)
+    return RedirectResponse("/admin", status_code=303) 
