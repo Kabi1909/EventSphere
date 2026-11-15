@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any 
 from datetime import datetime, timedelta, timezone
 import secrets
 from sqlalchemy.orm import Session
@@ -11,7 +11,7 @@ class TicketAgent(BaseAgent):
     CHECKIN_EARLY_HOURS = 3
 
     def _utcnow(self):
-        return datetime.now(timezone.utc).replace(tzinfo=None)
+         return (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)
 
     def handle_message(self, db: Session, msg: AgentMessage, bus: Any) -> AgentMessage:
         if msg.action == "ISSUE_TICKETS":
@@ -133,4 +133,3 @@ class TicketAgent(BaseAgent):
             )
 
         return self.reply(msg, Performative.FAILURE, {"reason": f"Unsupported action {msg.action}"})
-
