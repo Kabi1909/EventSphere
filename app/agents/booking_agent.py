@@ -1,10 +1,14 @@
 from datetime import datetime, timezone
+from typing import Any
 import uuid
-from sqlalchemy.orm import Session
+
 from sqlalchemy import update
-from app.models import Event, TicketTier, Booking, Ticket, WaitlistEntry
+from sqlalchemy.orm import Session
+
 from app.agents.base import BaseAgent
 from app.agents.protocol import AgentMessage, Performative
+from app.models import Booking, Event, Ticket, TicketTier, WaitlistEntry
+
 
 class BookingAgent(BaseAgent):
     name = "BookingAgent"
@@ -236,4 +240,5 @@ class BookingAgent(BaseAgent):
             db.flush()
             return self.reply(msg, Performative.AGREE, {"refunded_bookings": refunded_count})
 
-        return self.reply(msg, Performative.FAILURE, {"reason": f"Unsupported action {msg.action}"})
+        return self.reply(msg, Performative.FAILURE, {"reason": f"Unsupported action {msg.action}"}) 
+    
