@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List
+from typing import Any, Dict, List
 from sqlalchemy.orm import Session
 from app.models import AgentMessageLog
 from app.agents.protocol import AgentMessage, Performative
