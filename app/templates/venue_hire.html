@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="fw-bold mb-3">Private Venue Hire</h3>
+<div class="row g-4">
+  <div class="col-12 col-lg-5">
+    <div class="card p-4">
+      <h5 class="fw-bold mb-3">Request a Venue</h5>
+      <form method="post" action="/venue-hire">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="mb-2">
+          <label class="form-label">Venue</label>
+          <select name="venue_id" class="form-select" required>
+            {% for v in venues %}
+              <option value="{{ v.id }}">{{ v.name }} (Cap: {{ v.capacity }}, LKR {{ '%.2f'|format(v.hourly_rate) }}/hr)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Start Date & Time</label>
+          <input type="datetime-local" name="start_time" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">End Date & Time</label>
+          <input type="datetime-local" name="end_time" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Expected Guests</label>
+          <input type="number" name="guest_count" min="1" value="50" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Purpose (e.g. Farewell, Club Meeting)</label>
+          <input type="text" name="purpose" class="form-control" required>
+        </div>
+        <button class="btn btn-primary w-100">Submit to VenueAgent</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-7">
+    <h5 class="fw-bold mb-3">My Hire Requests & Agent Proposals</h5>
+    {% for h, alts in hires %}
+      <div class="card p-3 mb-3">
+        <div class="d-flex justify-content-between">
+          <strong>{{ h.venue.name }} — {{ h.purpose }}</strong>
+          <span class="badge bg-dark">{{ h.status }}</span>
+        </div>
+        <div class="small text-muted">
+          {{ h.start_time.strftime('%Y-%m-%d %H:%M') }} to {{ h.end_time.strftime('%H:%M') }} | Guests: {{ h.guest_count }}
+          {% if h.quoted_price > 0 %} | Quote: <strong>LKR {{ '%.2f'|format(h.quoted_price) }}</strong>{% endif %}
+        </div>
+        <p class="small mt-2 mb-1 text-primary">{{ h.agent_notes }}</p>
+        {% if alts %}
+          <div class="bg-light p-2 rounded mt-2">
+            <strong class="small">VenueAgent Counter-Proposals (Alternatives):</strong>
+            <ul class="small mb-0 mt-1">
+              {% for a in alts %}
+                <li><strong>{{ a.venue_name }}</strong>: {{ a.start_time }} to {{ a.end_time }} — LKR {{ '%.2f'|format(a.quoted_price) }} ({{ a.note }})</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="alert alert-light">No venue hire requests submitted yet.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %} 

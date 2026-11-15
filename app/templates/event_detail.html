@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card p-4 mb-4">
+  <span class="badge bg-primary mb-2" style="width: fit-content;">{{ event.category }}</span>
+  <h2 class="fw-bold">{{ event.title }}</h2>
+  <p class="text-muted mb-2">
+    <strong>Venue:</strong> {{ event.venue.name }} ({{ event.venue.location }})<br>
+    <strong>Time:</strong> {{ event.start_time.strftime('%Y-%m-%d %H:%M') }} to {{ event.end_time.strftime('%H:%M') }}
+  </p>
+  <p>{{ event.description }}</p>
+</div>
+
+{% if user_offers %}
+<div class="alert alert-success">
+  <h5 class="fw-bold">You have an active Waitlist Seat Hold!</h5>
+  {% for offer in user_offers %}
+    <form method="post" action="/events/{{ event.id }}/book" class="d-flex flex-wrap align-items-center gap-2 mt-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="tier_id" value="{{ offer.tier_id }}">
+      <input type="hidden" name="quantity" value="{{ offer.quantity }}">
+      <input type="hidden" name="waitlist_id" value="{{ offer.id }}">
+      <span>{{ offer.quantity }}x {{ offer.tier.name }} held until <strong>{{ offer.hold_expires_at.strftime('%H:%M:%S UTC') }}</strong></span>
+      <button class="btn btn-success btn-sm">Claim & Pay (LKR {{ '%.2f'|format(offer.tier.price * offer.quantity) }})</button>
+    </form>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h4 class="fw-bold mb-3">Ticket Categories</h4>
+<div class="row g-3">
+  {% for tier in event.ticket_tiers %}
+  <div class="col-12 col-md-6">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between">
+        <h5 class="fw-bold">{{ tier.name }}</h5>
+        <span class="fs-5 fw-bold text-primary">LKR {{ '%.2f'|format(tier.price) }}</span>
+      </div>
+      <p class="small text-muted">Tickets Left: <strong>{{ tier.remaining_qty }}</strong> / {{ tier.total_qty }}</p>
+      {% if tier.remaining_qty > 0 %}
+        <form method="post" action="/events/{{ event.id }}/book" class="d-flex gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="tier_id" value="{{ tier.id }}">
+          <input type="number" name="quantity" value="1" min="1" max="6" class="form-control" style="max-width: 90px;">
+          <button type="submit" class="btn btn-primary flex-grow-1">Simulate Pay & Book</button>
+        </form>
+      {% else %}
+        <form method="post" action="/events/{{ event.id }}/waitlist" class="d-flex gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="tier_id" value="{{ tier.id }}">
+          <input type="hidden" name="quantity" value="1">
+          <button type="submit" class="btn btn-outline-warning w-100">Sold Out — Join Waitlist</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %} 

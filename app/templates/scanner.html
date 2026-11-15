@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-6">
+    <div class="card p-4">
+      <h4 class="fw-bold mb-3">Gate Check-In Scanner</h4>
+
+      {% if scan_result %}
+        <div class="alert {% if scan_result.admitted %}alert-success{% else %}alert-danger{% endif %} fw-bold">
+          [{{ scan_result.performative }}] {{ scan_result.reason }}
+        </div>
+      {% endif %}
+
+      <div id="reader" class="mb-3 rounded overflow-hidden"></div>
+
+      <form method="post" action="/staff/scanner" id="scanForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="mb-3">
+          <label class="form-label">Active Event at Gate</label>
+          <select name="event_id" class="form-select" required>
+            {% for ev in events %}
+              <option value="{{ ev.id }}" {% if ev.id == selected_id %}selected{% endif %}>{{ ev.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Ticket QR Code (Camera Auto-fill or Manual Entry)</label>
+          <input type="text" name="code" id="codeInput" class="form-control form-control-lg" placeholder="EVT-XXXXXXXXXXXXXXXX" required>
+        </div>
+        <button type="submit" class="btn btn-dark w-100 btn-lg">Verify Ticket with TicketAgent</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+  try {
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      (decodedText) => {
+        document.getElementById("codeInput").value = decodedText;
+        html5QrCode.stop().then(() => document.getElementById("scanForm").submit());
+      },
+      () => {}
+    ).catch(() => {});
+  } catch (e) {}
+</script>
+{% endblock %}

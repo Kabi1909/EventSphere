@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="fw-bold mb-3">My Bookings & Digital QR Tickets</h3>
+
+{% if waitlists %}
+<div class="card p-3 mb-4">
+  <h5 class="fw-bold">My Waitlist Queue</h5>
+  {% for w in waitlists %}
+    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+      <div>
+        <strong>{{ w.event.title }}</strong> — {{ w.quantity }}x {{ w.tier.name }}
+        <span class="badge bg-info text-dark ms-1">{{ w.status }}</span>
+        {% if w.status == 'offered' and w.hold_expires_at %}
+          <small class="text-danger d-block">Hold expires at {{ w.hold_expires_at.strftime('%H:%M:%S UTC') }}</small>
+        {% endif %}
+      </div>
+      {% if w.status == 'offered' %}
+        <a href="/events/{{ w.event_id }}" class="btn btn-success btn-sm">Claim Now</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% for b in bookings %}
+<div class="card p-3 mb-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+    <div>
+      <h5 class="fw-bold mb-1">{{ b.event.title }}</h5>
+      <div class="small text-muted">
+        Tier: {{ b.tier.name }} (x{{ b.quantity }}) | Paid: LKR {{ '%.2f'|format(b.total_paid) }} | Ref: <code>{{ b.payment_ref }}</code>
+      </div>
+      <span class="badge {% if b.status == 'confirmed' %}bg-success{% else %}bg-secondary{% endif %} mt-1">{{ b.status }}</span>
+      {% if b.status == 'cancelled' %}
+        <span class="small text-muted ms-2">Refunded: LKR {{ '%.2f'|format(b.refund_amount) }}</span>
+      {% endif %}
+    </div>
+    {% if b.status == 'confirmed' %}
+      <form method="post" action="/bookings/{{ b.id }}/cancel">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="btn btn-outline-danger btn-sm">Cancel Booking</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if b.status == 'confirmed' %}
+  <div class="row g-2 mt-3">
+    {% for t in b.tickets %}
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="border rounded p-2 text-center bg-light">
+        <img src="data:image/png;base64,{{ qr_map[t.id] }}" alt="QR" style="width: 140px; height: 140px;">
+        <div class="fw-bold small mt-1"><code>{{ t.code }}</code></div>
+        <span class="badge {% if t.status == 'valid' %}bg-primary{% else %}bg-dark{% endif %}">{{ t.status }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="alert alert-light">You haven't booked any tickets yet.</div>
+{% endfor %}
+{% endblock %} 

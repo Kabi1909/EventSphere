@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-4 mb-4 bg-primary text-white rounded-4">
+  <h1 class="h3 fw-bold mb-1">Campus Events & Space Booking</h1>
+  <p class="mb-0 small opacity-75">Every seat, waitlist hold, and venue slot is negotiated by autonomous software agents.</p>
+</div>
+
+<form method="get" action="/" class="row g-2 mb-4">
+  <div class="col-12 col-md-6">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search events by title or keyword...">
+  </div>
+  <div class="col-8 col-md-4">
+    <select name="category" class="form-select">
+      <option value="">All Categories</option>
+      {% for cat in categories %}
+        <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-4 col-md-2">
+    <button class="btn btn-dark w-100" type="submit">Filter</button>
+  </div>
+</form>
+
+<div class="row g-3">
+  {% for ev in events %}
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card h-100">
+      <img src="{{ ev.image_url or ev.venue.image_url }}" class="card-img-top" style="height: 170px; object-fit: cover;" alt="{{ ev.title }}"> 
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge bg-secondary">{{ ev.category }}</span>
+          <small class="text-muted">{{ ev.start_time.strftime('%b %d, %H:%M') }}</small>
+        </div>
+        <h5 class="card-title fw-bold">{{ ev.title }}</h5>
+        <p class="text-muted small mb-2">Venue: {{ ev.venue.name }}</p>
+        <p class="card-text small flex-grow-1">{{ ev.description[:110] }}...</p>
+        <a href="/events/{{ ev.id }}" class="btn btn-primary w-100 mt-2">View Tickets</a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12"><div class="alert alert-light">No published events match your filter.</div></div>
+  {% endfor %}
+</div>
+{% endblock %}
