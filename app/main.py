@@ -408,7 +408,8 @@ def scan_ticket_submit(
 @app.get("/admin", response_class=HTMLResponse)
 def admin_dashboard(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(get_current_user)):
     require_role(user, ["admin"])
-    events = db.query(Event).order_by(Event.start_time.desc()).all()
+    # Exclude cancelled events from the active dashboard list
+    events = db.query(Event).filter(Event.status != "cancelled").order_by(Event.start_time.desc()).all()
     venues = db.query(Venue).all()
     escalated_hires = db.query(VenueHireRequest).filter_by(status="escalated").all()
     logs = db.query(AgentMessageLog).order_by(AgentMessageLog.id.desc()).limit(40).all()
