@@ -1,15 +1,101 @@
 {% extends "base.html" %}
 {% block content %}
-<h3 class="fw-bold mb-3">Notifications</h3>
-{% for n in notes %}
-  <div class="card p-3 mb-2">
-    <div class="d-flex justify-content-between">
-      <strong>{{ n.title }}</strong>
-      <small class="text-muted">{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-    </div>
-    <p class="mb-0 small">{{ n.message }}</p>
+<style>
+  .page-banner {
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
+    color: #ffffff;
+    padding: 2rem 2.25rem;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
+    margin-bottom: 1.75rem;
+  }
+  .note-card {
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #2563eb;
+    border-radius: 14px;
+    background-color: #ffffff;
+    padding: 1.15rem 1.35rem;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.03);
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+  }
+  .note-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+  }
+  .note-card.note-alert {
+    border-left-color: #dc2626;
+  }
+  .note-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background-color: #eff6ff;
+    color: #2563eb;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .note-alert .note-icon {
+    background-color: #fef2f2;
+    color: #dc2626;
+  }
+  .empty-state-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 3.25rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  }
+  .empty-icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-size: 1.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<!-- Header Banner -->
+<section class="page-banner d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h3 class="fw-bold mb-1"><i class="bi bi-bell me-2"></i>Notifications</h3>
+    <p class="small text-light opacity-75 mb-0">Real-time booking confirmations, venue decisions, and security alerts from NotificationAgent</p>
   </div>
-{% else %}
-  <div class="alert alert-light">No notifications yet.</div>
-{% endfor %}
-{% endblock %}
+  <span class="badge bg-white bg-opacity-10 border border-white border-opacity-25 rounded-pill px-3 py-2 fw-semibold">
+    {{ notes|length }} Total Alert{{ 's' if notes|length != 1 else '' }}
+  </span>
+</section>
+
+<div class="d-flex flex-column gap-3">
+  {% for n in notes %}
+    {% set is_alert = ('alert' in (n.title or '')|lower) or ('suspicious' in (n.title or '')|lower) %}
+    <div class="note-card {% if is_alert %}note-alert{% endif %} d-flex align-items-start gap-3">
+      <div class="note-icon">
+        <i class="bi {% if is_alert %}bi-shield-exclamation{% else %}bi-bell-fill{% endif %}"></i>
+      </div>
+      <div class="flex-grow-1">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+          <strong class="text-dark">{{ n.title }}</strong>
+          <small class="text-muted fw-medium">
+            <i class="bi bi-clock me-1"></i>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}
+          </small>
+        </div>
+        <p class="mb-0 small text-secondary">{{ n.message }}</p>
+      </div>
+    </div>
+  {% else %}
+    <div class="empty-state-card">
+      <div class="empty-icon-circle"><i class="bi bi-bell-slash"></i></div>
+      <h5 class="fw-bold text-dark mb-1">No Notifications Yet</h5>
+      <p class="text-muted small mb-0">You're all caught up! Alerts from EventSphere agents will appear here.</p>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %} 

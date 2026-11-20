@@ -1,18 +1,164 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card p-4 mb-4">
-  <span class="badge bg-primary mb-2" style="width: fit-content;">{{ event.category }}</span>
-  <h2 class="fw-bold">{{ event.title }}</h2>
-  <p class="text-muted mb-2">
-    <strong>Venue:</strong> {{ event.venue.name }} ({{ event.venue.location }})<br>
-    <strong>Time:</strong> {{ event.start_time.strftime('%Y-%m-%d %H:%M') }} to {{ event.end_time.strftime('%H:%M') }}
-  </p>
-  <p>{{ event.description }}</p>
+<style>
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .es-animate {
+    opacity: 0;
+    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .event-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
+    color: #ffffff;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+    margin-bottom: 2rem;
+  }
+  .event-hero::before {
+    content: "";
+    position: absolute;
+    top: -35%;
+    right: -10%;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, rgba(37, 99, 235, 0) 70%);
+    pointer-events: none;
+  }
+  .event-hero-banner-img {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    opacity: 0.25;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .event-hero-inner {
+    position: relative;
+    z-index: 2;
+    padding: 2.5rem 2.25rem;
+  }
+  .event-meta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    color: #f8fafc;
+    font-size: 0.84rem;
+    font-weight: 500;
+    padding: 0.42rem 0.9rem;
+    border-radius: 999px;
+  }
+
+  .tier-card {
+    border: 1px solid #e2e8f0;
+    border-top: 4px solid #2563eb;
+    border-radius: 16px;
+    background-color: #ffffff;
+    padding: 1.5rem;
+    height: 100%;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .tier-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  }
+  .tier-price-pill {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+    font-weight: 800;
+    font-size: 1.05rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 10px;
+  }
+  .seat-progress-track {
+    width: 100%;
+    height: 6px;
+    background-color: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .seat-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .es-input {
+    background-color: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0.58rem 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .es-input:focus {
+    background-color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+  .btn-es-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.6rem 1.15rem;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.24);
+    transition: all 0.18s ease;
+  }
+  .btn-es-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.34);
+  }
+</style>
+
+<!-- Back Link -->
+<div class="mb-3">
+  <a href="/" class="text-decoration-none small fw-semibold text-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to All Events
+  </a>
 </div>
 
+<!-- Event Hero Header -->
+<section class="event-hero es-animate">
+  {% if event.image_url or event.venue.image_url %}
+    <img src="{{ event.image_url or event.venue.image_url }}" alt="{{ event.title }}" class="event-hero-banner-img">
+  {% endif %}
+  <div class="event-hero-inner">
+    <span class="badge bg-info-subtle text-info-emphasis rounded-pill px-3 py-2 fw-bold mb-3">
+      <i class="bi bi-tag-fill me-1"></i> {{ event.category }}
+    </span>
+    <h2 class="fw-bold mb-2">{{ event.title }}</h2>
+    {% if event.description %}
+      <p class="text-light opacity-90 mb-4" style="max-width: 740px;">{{ event.description }}</p>
+    {% endif %}
+    <div class="d-flex flex-wrap gap-2">
+      <span class="event-meta-pill">
+        <i class="bi bi-geo-alt-fill text-info"></i>
+        {{ event.venue.name }} ({{ event.venue.location }})
+      </span>
+      <span class="event-meta-pill">
+        <i class="bi bi-calendar-event text-info"></i>
+        {{ event.start_time.strftime('%Y-%m-%d %H:%M') }} &ndash; {{ event.end_time.strftime('%H:%M') }}
+      </span>
+    </div>
+  </div>
+</section>
+
 {% if user_offers %}
-<div class="alert alert-success">
-  <h5 class="fw-bold">You have an active Waitlist Seat Hold!</h5>
+<div class="alert alert-success border-0 shadow-sm rounded-4 p-4 mb-4">
+  <h5 class="fw-bold mb-2"><i class="bi bi-hourglass-split me-1"></i> You have an active Waitlist Seat Hold!</h5>
   {% for offer in user_offers %}
     <form method="post" action="/events/{{ event.id }}/book" class="d-flex flex-wrap align-items-center gap-2 mt-2">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -20,39 +166,72 @@
       <input type="hidden" name="quantity" value="{{ offer.quantity }}">
       <input type="hidden" name="waitlist_id" value="{{ offer.id }}">
       <span>{{ offer.quantity }}x {{ offer.tier.name }} held until <strong>{{ offer.hold_expires_at.strftime('%H:%M:%S UTC') }}</strong></span>
-      <button class="btn btn-success btn-sm">Claim & Pay (LKR {{ '%.2f'|format(offer.tier.price * offer.quantity) }})</button>
+      <button class="btn btn-success btn-sm rounded-3 fw-semibold">Claim &amp; Pay (LKR {{ '%.2f'|format(offer.tier.price * offer.quantity) }})</button>
     </form>
   {% endfor %}
 </div>
 {% endif %}
 
-<h4 class="fw-bold mb-3">Ticket Categories</h4>
-<div class="row g-3">
-  {% for tier in event.ticket_tiers %}
-  <div class="col-12 col-md-6">
-    <div class="card p-3">
-      <div class="d-flex justify-content-between">
-        <h5 class="fw-bold">{{ tier.name }}</h5>
-        <span class="fs-5 fw-bold text-primary">LKR {{ '%.2f'|format(tier.price) }}</span>
-      </div>
-      <p class="small text-muted">Tickets Left: <strong>{{ tier.remaining_qty }}</strong> / {{ tier.total_qty }}</p>
-      {% if tier.remaining_qty > 0 %}
-        <form method="post" action="/events/{{ event.id }}/book" class="d-flex gap-2">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <input type="hidden" name="tier_id" value="{{ tier.id }}">
-          <input type="number" name="quantity" value="1" min="1" max="6" class="form-control" style="max-width: 90px;">
-          <button type="submit" class="btn btn-primary flex-grow-1">Simulate Pay & Book</button>
-        </form>
-      {% else %}
-        <form method="post" action="/events/{{ event.id }}/waitlist" class="d-flex gap-2">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <input type="hidden" name="tier_id" value="{{ tier.id }}">
-          <input type="hidden" name="quantity" value="1">
-          <button type="submit" class="btn btn-outline-warning w-100">Sold Out — Join Waitlist</button>
-        </form>
-      {% endif %}
-    </div>
+<!-- Ticket Categories -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h4 class="fw-bold text-dark mb-0"><i class="bi bi-ticket-perforated text-primary me-2"></i>Ticket Categories</h4>
+    <p class="text-muted small mb-0">Select your preferred tier and quantity (up to 6 tickets per booking)</p>
   </div>
+</div>
+
+<div class="row g-4">
+  {% for tier in event.ticket_tiers %}
+    {% set sold_qty = tier.total_qty - tier.remaining_qty %}
+    {% set fill_pct = ((sold_qty / tier.total_qty) * 100)|round|int if tier.total_qty > 0 else 0 %}
+    <div class="col-12 col-md-6 es-animate" style="animation-delay: {{ loop.index0 * 0.08 }}s;">
+      <div class="tier-card d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold text-dark mb-1">{{ tier.name }}</h5>
+            <small class="text-muted">Instant cryptographic QR pass included</small>
+          </div>
+          <span class="tier-price-pill">
+            {% if tier.price == 0 %}Free{% else %}LKR {{ '%.2f'|format(tier.price) }}{% endif %}
+          </span>
+        </div>
+
+        <div class="bg-light border rounded-3 p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center small mb-2">
+            <span class="text-secondary fw-semibold">
+              <i class="bi bi-people-fill me-1"></i>Tickets Left: <strong class="text-dark">{{ tier.remaining_qty }}</strong> / {{ tier.total_qty }}
+            </span>
+            {% if tier.remaining_qty == 0 %}
+              <span class="badge bg-danger-subtle text-danger rounded-pill">Sold Out</span>
+            {% elif tier.remaining_qty <= 10 or fill_pct >= 70 %}
+              <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill">Selling Fast</span>
+            {% else %}
+              <span class="badge bg-success-subtle text-success rounded-pill">Available</span>
+            {% endif %}
+          </div>
+          <div class="seat-progress-track">
+            <div class="seat-progress-fill {% if tier.remaining_qty == 0 %}bg-danger{% elif tier.remaining_qty <= 10 or fill_pct >= 70 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ fill_pct }}%;"></div>
+          </div>
+        </div>
+
+        {% if tier.remaining_qty > 0 %}
+          <form method="post" action="/events/{{ event.id }}/book" class="d-flex align-items-center gap-2 mt-auto">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="tier_id" value="{{ tier.id }}">
+            <div style="width: 96px;">
+              <input type="number" name="quantity" value="1" min="1" max="6" class="form-control es-input text-center" aria-label="Ticket Quantity">
+            </div>
+            <button type="submit" class="btn btn-es-primary flex-grow-1">
+              <i class="bi bi-credit-card-2-front me-1"></i> Simulate Pay &amp; Book
+            </button>
+          </form>
+        {% else %}
+          <button type="button" class="btn btn-outline-secondary w-100 rounded-3 fw-semibold mt-auto" disabled>
+            <i class="bi bi-x-circle me-1"></i> Sold Out
+          </button>
+        {% endif %}
+      </div>
+    </div>
   {% endfor %}
 </div>
 {% endblock %} 

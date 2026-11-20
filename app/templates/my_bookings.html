@@ -1,21 +1,109 @@
 {% extends "base.html" %}
 {% block content %}
-<h3 class="fw-bold mb-3">My Bookings & Digital QR Tickets</h3>
+<style>
+  .page-banner {
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
+    color: #ffffff;
+    padding: 2rem 2.25rem;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
+    margin-bottom: 1.75rem;
+  }
+  .booking-card {
+    border: 1px solid #e2e8f0;
+    border-left: 5px solid #2563eb;
+    border-radius: 16px;
+    background-color: #ffffff;
+    padding: 1.5rem;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+    transition: box-shadow 0.2s ease;
+  }
+  .booking-card.is-cancelled {
+    border-left-color: #94a3b8;
+    opacity: 0.92;
+  }
+  .booking-card:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+  .qr-pass-card {
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.18s ease, border-color 0.18s ease;
+  }
+  .qr-pass-card:hover {
+    transform: translateY(-2px);
+    border-color: #2563eb;
+  }
+  .qr-img-frame {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.5rem;
+    display: inline-block;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  }
+  .empty-state-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 3.25rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  }
+  .empty-icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-size: 1.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+  .btn-es-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.55rem 1.25rem;
+  }
+  .btn-es-primary:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
+  }
+</style>
+
+<!-- Header Banner -->
+<section class="page-banner d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h3 class="fw-bold mb-1"><i class="bi bi-ticket-perforated me-2"></i>My Bookings &amp; Digital QR Tickets</h3>
+    <p class="small text-light opacity-75 mb-0">Present your unique QR code at the event entrance for instant TicketAgent verification</p>
+  </div>
+  <span class="badge bg-white bg-opacity-10 border border-white border-opacity-25 rounded-pill px-3 py-2 fw-semibold">
+    {{ bookings|length }} Booking{{ 's' if bookings|length != 1 else '' }}
+  </span>
+</section>
 
 {% if waitlists %}
-<div class="card p-3 mb-4">
-  <h5 class="fw-bold">My Waitlist Queue</h5>
+<div class="card p-4 mb-4">
+  <h5 class="fw-bold mb-3"><i class="bi bi-hourglass-split text-primary me-1"></i> My Waitlist Queue</h5>
   {% for w in waitlists %}
     <div class="d-flex justify-content-between align-items-center border-bottom py-2">
       <div>
-        <strong>{{ w.event.title }}</strong> — {{ w.quantity }}x {{ w.tier.name }}
-        <span class="badge bg-info text-dark ms-1">{{ w.status }}</span>
+        <strong>{{ w.event.title }}</strong> &mdash; {{ w.quantity }}x {{ w.tier.name }}
+        <span class="badge bg-info text-dark ms-1 rounded-pill">{{ w.status }}</span>
         {% if w.status == 'offered' and w.hold_expires_at %}
           <small class="text-danger d-block">Hold expires at {{ w.hold_expires_at.strftime('%H:%M:%S UTC') }}</small>
         {% endif %}
       </div>
       {% if w.status == 'offered' %}
-        <a href="/events/{{ w.event_id }}" class="btn btn-success btn-sm">Claim Now</a>
+        <a href="/events/{{ w.event_id }}" class="btn btn-success btn-sm rounded-3 fw-semibold">Claim Now</a>
       {% endif %}
     </div>
   {% endfor %}
@@ -23,34 +111,59 @@
 {% endif %}
 
 {% for b in bookings %}
-<div class="card p-3 mb-3">
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+<div class="booking-card {% if b.status != 'confirmed' %}is-cancelled{% endif %} mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div>
-      <h5 class="fw-bold mb-1">{{ b.event.title }}</h5>
-      <div class="small text-muted">
-        Tier: {{ b.tier.name }} (x{{ b.quantity }}) | Paid: LKR {{ '%.2f'|format(b.total_paid) }} | Ref: <code>{{ b.payment_ref }}</code>
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+        <h5 class="fw-bold text-dark mb-0">{{ b.event.title }}</h5>
+        {% if b.status == 'confirmed' %}
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+            <i class="bi bi-check-circle-fill me-1"></i>Confirmed
+          </span>
+        {% else %}
+          <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-3 py-1 text-capitalize">
+            {{ b.status }}
+          </span>
+        {% endif %}
       </div>
-      <span class="badge {% if b.status == 'confirmed' %}bg-success{% else %}bg-secondary{% endif %} mt-1">{{ b.status }}</span>
+      <div class="small text-muted d-flex flex-wrap gap-3 mt-1">
+        <span><i class="bi bi-tag me-1"></i>Tier: <strong class="text-dark">{{ b.tier.name }} (x{{ b.quantity }})</strong></span>
+        <span><i class="bi bi-cash-coin me-1"></i>Paid: <strong class="text-dark">LKR {{ '%.2f'|format(b.total_paid) }}</strong></span>
+        <span><i class="bi bi-receipt me-1"></i>Ref: <code class="text-primary fw-semibold">{{ b.payment_ref }}</code></span>
+      </div>
       {% if b.status == 'cancelled' %}
-        <span class="small text-muted ms-2">Refunded: LKR {{ '%.2f'|format(b.refund_amount) }}</span>
+        <div class="small text-secondary mt-2">
+          <i class="bi bi-arrow-return-left me-1"></i>Refunded: <strong>LKR {{ '%.2f'|format(b.refund_amount) }}</strong>
+        </div>
       {% endif %}
     </div>
+
     {% if b.status == 'confirmed' %}
       <form method="post" action="/bookings/{{ b.id }}/cancel">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="btn btn-outline-danger btn-sm">Cancel Booking</button>
+        <button class="btn btn-outline-danger btn-sm rounded-3 fw-semibold px-3 py-2">
+          <i class="bi bi-x-circle me-1"></i> Cancel Booking
+        </button>
       </form>
     {% endif %}
   </div>
 
   {% if b.status == 'confirmed' %}
-  <div class="row g-2 mt-3">
+  <div class="row g-3 mt-3 pt-3 border-top">
     {% for t in b.tickets %}
     <div class="col-12 col-sm-6 col-md-4">
-      <div class="border rounded p-2 text-center bg-light">
-        <img src="data:image/png;base64,{{ qr_map[t.id] }}" alt="QR" style="width: 140px; height: 140px;">
-        <div class="fw-bold small mt-1"><code>{{ t.code }}</code></div>
-        <span class="badge {% if t.status == 'valid' %}bg-primary{% else %}bg-dark{% endif %}">{{ t.status }}</span>
+      <div class="qr-pass-card">
+        <div class="qr-img-frame mb-2">
+          <img src="data:image/png;base64,{{ qr_map[t.id] }}" alt="QR" style="width: 140px; height: 140px;">
+        </div>
+        <div class="fw-bold small mb-1"><code class="text-dark">{{ t.code }}</code></div>
+        {% if t.status == 'valid' %}
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">
+            <i class="bi bi-qr-code me-1"></i>Valid Pass
+          </span>
+        {% else %}
+          <span class="badge bg-dark rounded-pill px-3 text-capitalize">{{ t.status }}</span>
+        {% endif %}
       </div>
     </div>
     {% endfor %}
@@ -58,6 +171,13 @@
   {% endif %}
 </div>
 {% else %}
-<div class="alert alert-light">You haven't booked any tickets yet.</div>
+<div class="empty-state-card">
+  <div class="empty-icon-circle"><i class="bi bi-ticket-perforated"></i></div>
+  <h5 class="fw-bold text-dark mb-1">No Tickets Booked Yet</h5>
+  <p class="text-muted small mb-3">Browse upcoming campus events and reserve your seats to get instant digital QR passes.</p>
+  <a href="/" class="btn btn-es-primary">
+    <i class="bi bi-calendar-event me-1"></i> Explore Events
+  </a>
+</div>
 {% endfor %}
 {% endblock %} 

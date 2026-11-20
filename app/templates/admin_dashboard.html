@@ -11,11 +11,135 @@
     --es-border: #e2e8f0;
   }
 
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .dash-animate {
+    opacity: 0;
+    animation: fadeInUp 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Hero Control Center Banner (Matches Home Page Theme) */
+  .admin-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 52%, #2563eb 100%);
+    padding: 2.5rem 2.25rem 4.1rem 2.25rem;
+    color: #ffffff;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+  }
+  .admin-hero::before {
+    content: "";
+    position: absolute;
+    top: -35%;
+    right: -10%;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, rgba(37, 99, 235, 0) 70%);
+    pointer-events: none;
+  }
+  .admin-hero::after {
+    content: "";
+    position: absolute;
+    bottom: -45%;
+    left: -8%;
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(15, 23, 42, 0) 70%);
+    pointer-events: none;
+  }
+  .admin-hero-inner {
+    position: relative;
+    z-index: 2;
+  }
+  .hero-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(15, 23, 42, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    color: #f8fafc;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+  }
+  .hero-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #34d399;
+    box-shadow: 0 0 10px #34d399;
+  }
+
+  /* Overlapping Floating KPI Strip */
+  .kpi-strip-wrap {
+    position: relative;
+    z-index: 10;
+    margin-top: -36px;
+    margin-bottom: 2rem;
+    padding: 0 0.75rem;
+  }
+
+  .kpi-card {
+    border: 1px solid var(--es-border);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+    padding: 1.15rem 1.25rem;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+  }
+  .kpi-card::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #2563eb, #6366f1);
+    opacity: 0.85;
+  }
+  .kpi-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .kpi-icon-blue   { background-color: #eff6ff; color: #2563eb; }
+  .kpi-icon-indigo { background-color: #eef2ff; color: #4f46e5; }
+  .kpi-icon-green  { background-color: #ecfdf5; color: #059669; }
+  .kpi-icon-amber  { background-color: #fffbeb; color: #d97706; }
+
   .dashboard-section-title {
     font-size: 1.08rem;
     font-weight: 700;
     color: var(--es-slate-900);
     letter-spacing: -0.015em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   /* Elevated Modern Cards */
@@ -24,7 +148,7 @@
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
     background-color: #ffffff;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: box-shadow 0.2s ease;
   }
   .dashboard-card:hover {
     box-shadow: 0 8px 28px rgba(15, 23, 42, 0.07);
@@ -36,35 +160,25 @@
   .form-card-event {
     border-top: 4px solid #2563eb;
   }
-
-  /* KPI Summary Cards */
-  .kpi-card {
-    border: 1px solid var(--es-border);
-    border-radius: 14px;
-    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    position: relative;
-    overflow: hidden;
+  .section-icon-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    background-color: #eff6ff;
+    color: #2563eb;
   }
-  .kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-  }
-  .kpi-card::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #2563eb, #6366f1);
-    opacity: 0.75;
+  .section-icon-dark {
+    background-color: #f1f5f9;
+    color: #0f172a;
   }
 
   /* Attractive Form Inputs & Labels */
   .field-label {
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -124,6 +238,7 @@
     border-radius: 10px;
     font-weight: 600;
     letter-spacing: 0.01em;
+    padding: 0.65rem 1.2rem;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     transition: all 0.18s ease;
   }
@@ -141,6 +256,7 @@
     border-radius: 10px;
     font-weight: 600;
     letter-spacing: 0.01em;
+    padding: 0.65rem 1.2rem;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
     transition: all 0.18s ease;
   }
@@ -155,30 +271,103 @@
     border-radius: 8px;
     font-weight: 600;
     font-size: 0.8rem;
-    padding: 0.35rem 0.85rem;
+    padding: 0.4rem 0.85rem;
     transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    border: none;
   }
   .btn-action-pill:hover {
     transform: translateY(-1px);
+  }
+
+  /* Solid Filled Action Buttons (Edit, Publish, Cancel) */
+  .btn-action-edit {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28);
+  }
+  .btn-action-edit:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    color: #ffffff;
+    box-shadow: 0 5px 14px rgba(37, 99, 235, 0.38);
+  }
+
+  .btn-action-publish {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(5, 150, 105, 0.28);
+  }
+  .btn-action-publish:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: #ffffff;
+    box-shadow: 0 5px 14px rgba(5, 150, 105, 0.38);
+  }
+
+  .btn-action-cancel {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(220, 38, 38, 0.28);
+  }
+  .btn-action-cancel:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: #ffffff;
+    box-shadow: 0 5px 14px rgba(220, 38, 38, 0.38);
+  }
+
+  /* Slim Occupancy Bar in Event Table */
+  .mini-progress-track {
+    width: 90px;
+    height: 5px;
+    background-color: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 0.35rem;
+  }
+  .mini-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  /* Modal Gradient Header */
+  .es-modal-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #2563eb 100%);
+    color: #ffffff;
+    padding: 1.2rem 1.5rem;
+    border-bottom: none;
+  }
+  .es-modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+
+  /* Escalated Hires Banner */
+  .escalated-card {
+    border: 1px solid #fde68a;
+    border-left: 5px solid #f59e0b;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.08);
   }
 
   /* Agent Belief Cards */
   .belief-card {
     border: 1px solid var(--es-border);
     border-top: 4px solid #2563eb;
-    border-radius: 12px;
+    border-radius: 14px;
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-    padding: 0.95rem 1.05rem;
+    padding: 1rem 1.1rem;
     height: 100%;
-    min-height: 125px;
+    min-height: 132px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
   .belief-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   }
   .belief-card.agent-ticket { border-top-color: #059669; }
   .belief-card.agent-venue { border-top-color: #7c3aed; }
@@ -188,11 +377,13 @@
   .belief-agent-pill {
     font-size: 0.72rem;
     font-weight: 700;
-    padding: 0.22rem 0.6rem;
-    border-radius: 6px;
+    padding: 0.24rem 0.65rem;
+    border-radius: 999px;
     background-color: #eff6ff;
     color: #1d4ed8;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
   }
   .agent-ticket .belief-agent-pill { background-color: #ecfdf5; color: #047857; }
   .agent-venue .belief-agent-pill { background-color: #f5f3ff; color: #6d28d9; }
@@ -200,11 +391,12 @@
   .agent-waitlist .belief-agent-pill { background-color: #ecfeff; color: #0e7490; }
 
   .belief-value {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 800;
     color: var(--es-slate-900);
     margin-top: auto;
     padding-top: 0.35rem;
+    letter-spacing: -0.02em;
   }
 
   /* Compact Scrollable Box for Dictionary/List Beliefs (e.g. Scan Attempts) */
@@ -215,9 +407,9 @@
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 0.4rem 0.55rem;
-    margin-top: 0.4rem;
+    margin-top: 0.45rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.74rem;
+    font-size: 0.73rem;
     line-height: 1.45;
     color: #0f172a;
   }
@@ -225,7 +417,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.15rem 0;
+    padding: 0.16rem 0;
     border-bottom: 1px dashed #cbd5e1;
   }
   .belief-json-row:last-child {
@@ -236,7 +428,7 @@
   .table-modern thead th {
     background-color: #f8fafc;
     color: var(--es-slate-500);
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -247,20 +439,38 @@
     padding: 0.9rem 0.75rem;
     border-bottom: 1px solid #f1f5f9;
   }
+  .payload-code {
+    display: inline-block;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    color: #334155;
+    font-size: 0.76rem;
+    word-break: break-word;
+  }
 </style>
 
-<!-- Page Header -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
-  <div>
-    <h3 class="fw-bold mb-1 text-dark">Organiser & Multi-Agent Control Center</h3>
-    <p class="text-muted small mb-0">Real-time event operations, autonomous agent beliefs, and FIPA message bus traceability</p>
+<!-- Upgraded Hero Header -->
+<section class="admin-hero dash-animate">
+  <div class="admin-hero-inner d-flex flex-wrap justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+      <div class="d-inline-flex align-items-center gap-2 small fw-bold text-uppercase mb-2" style="color: #bfdbfe; letter-spacing: 0.06em;">
+        <i class="bi bi-speedometer2"></i> EventSphere Operations
+      </div>
+      <h3 class="fw-bold mb-1">Organiser &amp; Multi-Agent Control Center</h3>
+      <p class="small mb-0" style="color: #dbeafe;">
+        Real-time event operations, autonomous agent beliefs, and FIPA message bus traceability
+      </p>
+    </div>
+    <span class="hero-status-pill">
+      <span class="hero-dot"></span>
+      MAS Engine Active
+    </span>
   </div>
-  <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
-    ● MAS Engine Active
-  </span>
-</div>
+</section>
 
-<!-- Top KPI Overview Strip -->
+<!-- Top Floating KPI Overview Strip -->
 {% set ns = namespace(total_sold=0, total_cap=0, total_checkins=0, total_rev=0.0) %}
 {% for s in event_stats %}
   {% set ns.total_sold = ns.total_sold + s.sold %}
@@ -269,39 +479,70 @@
   {% set ns.total_rev = ns.total_rev + s.revenue %}
 {% endfor %}
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3">
-    <div class="kpi-card p-3">
-      <div class="text-muted small fw-bold text-uppercase">Active Events</div>
-      <div class="fs-3 fw-bold text-dark mt-1">{{ event_stats|length }}</div>
+<div class="kpi-strip-wrap dash-animate" style="animation-delay: 0.06s;">
+  <div class="row g-3">
+    <div class="col-6 col-md-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-2">
+        <div>
+          <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Active Events</div>
+          <div class="fs-3 fw-bold text-dark mt-1">{{ event_stats|length }}</div>
+        </div>
+        <div class="kpi-icon-box kpi-icon-blue">
+          <i class="bi bi-calendar-event-fill"></i>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="kpi-card p-3">
-      <div class="text-muted small fw-bold text-uppercase">Tickets Sold</div>
-      <div class="fs-3 fw-bold text-primary mt-1">{{ ns.total_sold }} <span class="text-muted fw-semibold">/ {{ ns.total_cap }}</span></div>
+
+    <div class="col-6 col-md-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-2">
+        <div>
+          <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Tickets Sold</div>
+          <div class="fs-3 fw-bold text-primary mt-1">{{ ns.total_sold }} <span class="text-muted fw-semibold fs-5">/ {{ ns.total_cap }}</span></div>
+        </div>
+        <div class="kpi-icon-box kpi-icon-indigo">
+          <i class="bi bi-ticket-perforated-fill"></i>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="kpi-card p-3">
-      <div class="text-muted small fw-bold text-uppercase">Gate Check-Ins</div>
-      <div class="fs-3 fw-bold text-success mt-1">{{ ns.total_checkins }}</div>
+
+    <div class="col-6 col-md-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-2">
+        <div>
+          <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Gate Check-Ins</div>
+          <div class="fs-3 fw-bold text-success mt-1">{{ ns.total_checkins }}</div>
+        </div>
+        <div class="kpi-icon-box kpi-icon-green">
+          <i class="bi bi-qr-code-scan"></i>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="kpi-card p-3">
-      <div class="text-muted small fw-bold text-uppercase">Total Revenue</div>
-      <div class="fs-3 fw-bold text-dark mt-1">LKR {{ '%.2f'|format(ns.total_rev) }}</div>
+
+    <div class="col-6 col-md-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-2">
+        <div>
+          <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Total Revenue</div>
+          <div class="fs-4 fw-bold text-dark mt-1">LKR {{ '%.2f'|format(ns.total_rev) }}</div>
+        </div>
+        <div class="kpi-icon-box kpi-icon-amber">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Event Sales & Check-in Overview -->
-<div class="dashboard-card p-4 mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="dashboard-section-title mb-0">Event Sales, Revenue & Check-Ins</h5>
-    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill">{{ event_stats|length }} scheduled event(s)</span>
+<div class="dashboard-card p-4 mb-4 dash-animate" style="animation-delay: 0.12s;">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h5 class="dashboard-section-title mb-0">
+      <span class="section-icon-badge"><i class="bi bi-bar-chart-line-fill"></i></span>
+      Event Sales, Revenue &amp; Check-Ins
+    </h5>
+    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-semibold">
+      <i class="bi bi-calendar3 me-1"></i>{{ event_stats|length }} scheduled event(s)
+    </span>
   </div>
+
   <div class="table-responsive">
     <table class="table table-modern table-hover align-middle mb-0">
       <thead>
@@ -317,36 +558,58 @@
       </thead>
       <tbody>
         {% for s in event_stats %}
+        {% set pct = ((s.sold / s.capacity) * 100)|round|int if s.capacity > 0 else 0 %}
         <tr>
           <td>
             <div class="fw-bold text-dark">{{ s.event.title }}</div>
-            <small class="text-muted">{{ s.event.start_time.strftime('%Y-%m-%d %H:%M') }} &ndash; {{ s.event.end_time.strftime('%H:%M') }}</small>
+            <small class="text-muted">
+              <i class="bi bi-clock me-1"></i>{{ s.event.start_time.strftime('%Y-%m-%d %H:%M') }} &ndash; {{ s.event.end_time.strftime('%H:%M') }}
+            </small>
           </td>
-          <td class="text-secondary fw-medium">{{ s.event.venue.name }}</td>
+          <td class="text-secondary fw-medium">
+            <i class="bi bi-geo-alt text-primary me-1"></i>{{ s.event.venue.name }}
+          </td>
           <td>
             {% if s.event.status == 'published' %}
-              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">Published</span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                <i class="bi bi-check-circle-fill me-1"></i>Published
+              </span>
             {% elif s.event.status == 'draft' %}
-              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1">Draft</span>
+              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1">
+                <i class="bi bi-pencil-fill me-1"></i>Draft
+              </span>
             {% else %}
               <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">{{ s.event.status|capitalize }}</span>
             {% endif %}
           </td>
-          <td><strong>{{ s.sold }}</strong> <span class="text-muted">/ {{ s.capacity }}</span></td>
-          <td>{{ s.checkins }}</td>
-          <td class="fw-bold text-dark">LKR {{ '%.2f'|format(s.revenue) }}</td>
           <td>
-            <div class="d-flex justify-content-end flex-wrap gap-2">
-              <button type="button" class="btn btn-outline-primary btn-action-pill" data-bs-toggle="modal" data-bs-target="#editEventModal{{ s.event.id }}">
-                Edit
+            <div><strong>{{ s.sold }}</strong> <span class="text-muted">/ {{ s.capacity }}</span></div>
+            <div class="mini-progress-track" title="{{ pct }}% sold">
+              <div class="mini-progress-fill {% if pct >= 100 %}bg-danger{% elif pct >= 70 %}bg-warning{% else %}bg-primary{% endif %}" style="width: {{ pct }}%;"></div>
+            </div>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 fw-semibold">
+              <i class="bi bi-person-check text-success me-1"></i>{{ s.checkins }}
+            </span>
+          </td>
+          <td class="fw-bold text-dark text-nowrap">LKR {{ '%.2f'|format(s.revenue) }}</td>
+          <td class="text-end text-nowrap">
+            <div class="d-inline-flex align-items-center justify-content-end flex-nowrap gap-2">
+              <button type="button" class="btn btn-action-pill btn-action-edit" data-bs-toggle="modal" data-bs-target="#editEventModal{{ s.event.id }}">
+                <i class="bi bi-pencil-square"></i> Edit
               </button>
-              <form method="post" action="/admin/events/{{ s.event.id }}/status" class="d-flex gap-2">
+              <form method="post" action="/admin/events/{{ s.event.id }}/status" class="d-inline-flex align-items-center flex-nowrap gap-2 m-0">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if s.event.status == 'draft' %}
-                  <button name="new_status" value="published" class="btn btn-success btn-action-pill">Publish</button>
+                  <button name="new_status" value="published" class="btn btn-action-pill btn-action-publish">
+                    <i class="bi bi-broadcast"></i> Publish
+                  </button>
                 {% endif %}
                 {% if s.event.status != 'cancelled' %}
-                  <button name="new_status" value="cancelled" class="btn btn-outline-danger btn-action-pill">Cancel</button>
+                  <button name="new_status" value="cancelled" class="btn btn-action-pill btn-action-cancel">
+                    <i class="bi bi-trash3-fill"></i> Delete 
+                  </button>
                 {% endif %}
               </form>
             </div>
@@ -359,8 +622,8 @@
             <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
               <form method="post" action="/admin/events/{{ s.event.id }}/edit">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <div class="modal-header bg-light border-bottom px-4 py-3">
-                  <h5 class="modal-title fw-bold text-dark">Edit Event: {{ s.event.title }}</h5>
+                <div class="modal-header es-modal-header">
+                  <h5 class="modal-title fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Event: {{ s.event.title }}</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
@@ -403,7 +666,9 @@
                 </div>
                 <div class="modal-footer bg-light border-top px-4 py-3">
                   <button type="button" class="btn btn-outline-secondary btn-action-pill" data-bs-dismiss="modal">Close</button>
-                  <button type="submit" class="btn btn-es-primary px-4 py-2">Save Changes</button>
+                  <button type="submit" class="btn btn-es-primary px-4 py-2">
+                    <i class="bi bi-check2-circle me-1"></i> Save Changes
+                  </button>
                 </div>
               </form>
             </div>
@@ -417,20 +682,30 @@
 
 <!-- Escalated Private Hire Approvals -->
 {% if escalated_hires %}
-<div class="dashboard-card p-4 mb-4 border-warning border-2">
-  <h5 class="dashboard-section-title text-warning-emphasis mb-3">Escalated Private Venue Hire Requests</h5>
+<div class="escalated-card p-4 mb-4 dash-animate" style="animation-delay: 0.16s;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="dashboard-section-title text-warning-emphasis mb-0">
+      <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+      Escalated Private Venue Hire Requests
+    </h5>
+    <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold">{{ escalated_hires|length }} Pending</span>
+  </div>
   {% for h in escalated_hires %}
-    <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom py-3 gap-2">
+    <div class="d-flex flex-wrap justify-content-between align-items-center border-top py-3 gap-2">
       <div>
-        <strong class="text-dark">{{ h.venue.name }}</strong> &mdash; {{ h.purpose }}
-        <span class="badge bg-light text-dark border ms-1">{{ h.guest_count }} guests</span>
+        <strong class="text-dark"><i class="bi bi-building me-1 text-warning-emphasis"></i>{{ h.venue.name }}</strong> &mdash; {{ h.purpose }}
+        <span class="badge bg-white text-dark border ms-1">{{ h.guest_count }} guests</span>
         <span class="badge bg-primary-subtle text-primary ms-1">Quote: LKR {{ '%.2f'|format(h.quoted_price) }}</span><br>
-        <small class="text-muted">{{ h.start_time }} to {{ h.end_time }} | {{ h.agent_notes }}</small>
+        <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ h.start_time }} to {{ h.end_time }} | {{ h.agent_notes }}</small>
       </div>
-      <form method="post" action="/admin/hires/{{ h.id }}/decide" class="d-flex gap-2">
+      <form method="post" action="/admin/hires/{{ h.id }}/decide" class="d-inline-flex flex-nowrap gap-2 m-0">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button name="decision" value="approve" class="btn btn-success btn-action-pill">Approve</button>
-        <button name="decision" value="reject" class="btn btn-danger btn-action-pill">Reject</button>
+        <button name="decision" value="approve" class="btn btn-action-pill btn-action-publish">
+          <i class="bi bi-check-lg"></i> Approve
+        </button>
+        <button name="decision" value="reject" class="btn btn-action-pill btn-action-cancel">
+          <i class="bi bi-x-lg"></i> Reject
+        </button>
       </form>
     </div>
   {% endfor %}
@@ -438,13 +713,16 @@
 {% endif %}
 
 <!-- Create Venue & Create Event (Well-Spaced Attractive Forms) -->
-<div class="row g-4 mb-4">
+<div class="row g-4 mb-4 dash-animate" style="animation-delay: 0.18s;">
   <!-- Add New Venue Card -->
   <div class="col-12 col-lg-5">
     <div class="dashboard-card form-card-venue p-4 h-100 d-flex flex-column">
-      <div class="mb-3 pb-2 border-bottom">
-        <h5 class="dashboard-section-title mb-1">Add New Venue</h5>
-        <p class="text-muted small mb-0">Register campus halls and outdoor spaces for scheduling</p>
+      <div class="mb-3 pb-3 border-bottom d-flex align-items-start gap-2">
+        <span class="section-icon-badge section-icon-dark mt-1"><i class="bi bi-building-add"></i></span>
+        <div>
+          <h5 class="dashboard-section-title mb-1">Add New Venue</h5>
+          <p class="text-muted small mb-0">Register campus halls and outdoor spaces for scheduling</p>
+        </div>
       </div>
 
       <form method="post" action="/admin/venues" class="d-flex flex-column flex-grow-1">
@@ -477,16 +755,18 @@
         </div>
 
         <div class="mb-3">
-          <label class="field-label">Facilities & Description</label>
+          <label class="field-label">Facilities &amp; Description</label>
           <input type="text" name="description" class="form-control" placeholder="Projector, AC, Sound System">
         </div>
 
-        <div class="form-check p-3 bg-light rounded-3 border mb-4">
-          <input class="form-check-input ms-0 me-2" type="checkbox" name="is_private_hire_open" value="1" id="privateHireCheck" checked>
+        <div class="form-check p-3 bg-light rounded-3 border mb-4 d-flex align-items-center">
+          <input class="form-check-input ms-0 me-2 mt-0" type="checkbox" name="is_private_hire_open" value="1" id="privateHireCheck" checked>
           <label class="form-check-label small fw-semibold text-dark" for="privateHireCheck">Available for Private Venue Hire</label>
         </div>
 
-        <button class="btn btn-es-dark w-100 py-2.5 mt-auto">Create Venue</button>
+        <button class="btn btn-es-dark w-100 mt-auto">
+          <i class="bi bi-plus-circle me-1"></i> Create Venue
+        </button>
       </form>
     </div>
   </div>
@@ -494,9 +774,12 @@
   <!-- Create Event Card -->
   <div class="col-12 col-lg-7">
     <div class="dashboard-card form-card-event p-4 h-100 d-flex flex-column">
-      <div class="mb-3 pb-2 border-bottom">
-        <h5 class="dashboard-section-title mb-1">Create & Publish Event</h5>
-        <p class="text-muted small mb-0">Validated automatically by VenueAgent (includes 60-minute turnaround buffer)</p>
+      <div class="mb-3 pb-3 border-bottom d-flex align-items-start gap-2">
+        <span class="section-icon-badge mt-1"><i class="bi bi-calendar-plus-fill"></i></span>
+        <div>
+          <h5 class="dashboard-section-title mb-1">Create &amp; Publish Event</h5>
+          <p class="text-muted small mb-0">Validated automatically by VenueAgent (includes 60-minute turnaround buffer)</p>
+        </div>
       </div>
 
       <form method="post" action="/admin/events" enctype="multipart/form-data" class="d-flex flex-column flex-grow-1">
@@ -505,7 +788,7 @@
         <div class="row g-3 mb-3">
           <div class="col-12 col-md-8">
             <label class="field-label">Event Title</label>
-            <input type="text" name="title" class="form-control" placeholder="e.g., Annual AI & Multi-Agent Symposium 2026" required>
+            <input type="text" name="title" class="form-control" placeholder="e.g., Annual AI &amp; Multi-Agent Symposium 2026" required>
           </div>
           <div class="col-12 col-md-4">
             <label class="field-label">Category</label>
@@ -538,11 +821,11 @@
 
         <div class="row g-3 mb-3">
           <div class="col-12 col-md-6">
-            <label class="field-label">Start Date & Time</label>
+            <label class="field-label">Start Date &amp; Time</label>
             <input type="datetime-local" name="start_time" class="form-control" required>
           </div>
           <div class="col-12 col-md-6">
-            <label class="field-label">End Date & Time</label>
+            <label class="field-label">End Date &amp; Time</label>
             <input type="datetime-local" name="end_time" class="form-control" required>
           </div>
         </div>
@@ -572,37 +855,53 @@
           <input type="file" name="image_file" accept="image/*" class="form-control">
         </div>
 
-        <button class="btn btn-es-primary w-100 py-2.5 mt-auto">Submit Event to VenueAgent</button>
+        <button class="btn btn-es-primary w-100 mt-auto">
+          <i class="bi bi-send-check me-1"></i> Submit Event to VenueAgent
+        </button>
       </form>
     </div>
   </div>
 </div>
 
 <!-- Persistent Agent Beliefs (Uniform Compact Card Grid) -->
-<div class="dashboard-card p-4 mb-4">
+<div class="dashboard-card p-4 mb-4 dash-animate" style="animation-delay: 0.22s;">
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <div>
-      <h5 class="dashboard-section-title mb-1">Persistent Agent Beliefs (Database State)</h5>
-      <p class="text-muted small mb-0">Live internal state counters maintained by each autonomous agent in PostgreSQL</p>
+    <div class="d-flex align-items-start gap-2">
+      <span class="section-icon-badge mt-1"><i class="bi bi-cpu-fill"></i></span>
+      <div>
+        <h5 class="dashboard-section-title mb-1">Persistent Agent Beliefs (Database State)</h5>
+        <p class="text-muted small mb-0">Live internal state counters maintained by each autonomous agent in PostgreSQL</p>
+      </div>
     </div>
     <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
-      {{ beliefs|length }} Active Belief Keys
+      <i class="bi bi-database-check me-1"></i>{{ beliefs|length }} Active Belief Keys
     </span>
   </div>
 
   <div class="row g-3">
     {% for b in beliefs %}
       {% set agent_class = '' %}
-      {% if 'Ticket' in b.agent_name %}{% set agent_class = 'agent-ticket' %}
-      {% elif 'Venue' in b.agent_name %}{% set agent_class = 'agent-venue' %}
-      {% elif 'Notification' in b.agent_name %}{% set agent_class = 'agent-notification' %}
-      {% elif 'Waitlist' in b.agent_name %}{% set agent_class = 'agent-waitlist' %}
+      {% set agent_icon = 'bi-cart-check-fill' %}
+      {% if 'Ticket' in b.agent_name %}
+        {% set agent_class = 'agent-ticket' %}
+        {% set agent_icon = 'bi-qr-code' %}
+      {% elif 'Venue' in b.agent_name %}
+        {% set agent_class = 'agent-venue' %}
+        {% set agent_icon = 'bi-building-check' %}
+      {% elif 'Notification' in b.agent_name %}
+        {% set agent_class = 'agent-notification' %}
+        {% set agent_icon = 'bi-bell-fill' %}
+      {% elif 'Waitlist' in b.agent_name %}
+        {% set agent_class = 'agent-waitlist' %}
+        {% set agent_icon = 'bi-hourglass-split' %}
       {% endif %}
       {% set raw_val = b.value_json|string %}
       <div class="col-12 col-sm-6 col-md-4 col-lg-3">
         <div class="belief-card {{ agent_class }}">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="belief-agent-pill">{{ b.agent_name }}</span>
+            <span class="belief-agent-pill">
+              <i class="bi {{ agent_icon }}"></i> {{ b.agent_name }}
+            </span>
           </div>
           <div class="text-muted small fw-semibold">{{ b.key | replace('_', ' ') | title }}</div>
 
@@ -646,13 +945,18 @@
 </div>
 
 <!-- Traceable Agent Message Log -->
-<div class="dashboard-card p-4">
+<div class="dashboard-card p-4 dash-animate" style="animation-delay: 0.26s;">
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <div>
-      <h5 class="dashboard-section-title mb-1">Agent Message Bus Traceability Log</h5>
-      <p class="text-muted small mb-0">Auditable inter-agent communication log across all system transactions</p>
+    <div class="d-flex align-items-start gap-2">
+      <span class="section-icon-badge section-icon-dark mt-1"><i class="bi bi-journal-code"></i></span>
+      <div>
+        <h5 class="dashboard-section-title mb-1">Agent Message Bus Traceability Log</h5>
+        <p class="text-muted small mb-0">Auditable inter-agent communication log across all system transactions</p>
+      </div>
     </div>
-    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">Latest {{ logs|length }} Messages</span>
+    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">
+      <i class="bi bi-arrow-left-right me-1 text-primary"></i>Latest {{ logs|length }} Messages
+    </span>
   </div>
 
   <div class="table-responsive">
@@ -685,8 +989,8 @@
             {% endif %}
           </td>
           <td class="fw-semibold text-dark">{{ log.action }}</td>
-          <td style="max-width: 360px; word-break: break-word;">
-            <code class="text-secondary">{{ log.content_json }}</code>
+          <td style="max-width: 360px;">
+            <code class="payload-code">{{ log.content_json }}</code>
           </td>
         </tr>
         {% endfor %}

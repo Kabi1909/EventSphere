@@ -1,34 +1,119 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-12 col-md-6">
-    <div class="card p-4">
-      <h4 class="fw-bold mb-3">Gate Check-In Scanner</h4>
+<style>
+  .scanner-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    overflow: hidden;
+    background-color: #ffffff;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  }
+  .scanner-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
+    color: #ffffff;
+    padding: 1.75rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .scanner-header::after {
+    content: "";
+    position: absolute;
+    top: -40%;
+    right: -12%;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.3) 0%, rgba(37, 99, 235, 0) 70%);
+    pointer-events: none;
+  }
+  .field-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #334155;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+  .scanner-card .form-control,
+  .scanner-card .form-select {
+    background-color: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0.65rem 0.9rem;
+    color: #0f172a;
+  }
+  .scanner-card .form-control:focus,
+  .scanner-card .form-select:focus {
+    background-color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+  .reader-box {
+    border: 2px dashed #cbd5e1;
+    border-radius: 14px;
+    background-color: #0f172a;
+    overflow: hidden;
+  }
+  .btn-es-dark {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.22);
+    transition: all 0.18s ease;
+  }
+  .btn-es-dark:hover {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+</style>
 
-      {% if scan_result %}
-        <div class="alert {% if scan_result.admitted %}alert-success{% else %}alert-danger{% endif %} fw-bold">
-          [{{ scan_result.performative }}] {{ scan_result.reason }}
-        </div>
-      {% endif %}
+<div class="row justify-content-center py-2">
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="scanner-card">
+      <div class="scanner-header">
+        <span class="badge bg-white bg-opacity-10 border border-white border-opacity-25 rounded-pill px-3 py-1 mb-2 small">
+          <i class="bi bi-shield-check me-1"></i> TicketAgent Gate Verification
+        </span>
+        <h4 class="fw-bold mb-1"><i class="bi bi-qr-code-scan me-2"></i>Gate Check-In Scanner</h4>
+        <p class="small text-light opacity-75 mb-0">Live QR check-in with automatic duplicate &amp; shared-screenshot detection</p>
+      </div>
 
-      <div id="reader" class="mb-3 rounded overflow-hidden"></div>
+      <div class="p-4">
+        {% if scan_result %}
+          <div class="alert {% if scan_result.admitted %}alert-success{% else %}alert-danger{% endif %} border-0 shadow-sm rounded-3 fw-bold d-flex align-items-start gap-2 mb-4">
+            <i class="bi {% if scan_result.admitted %}bi-check-circle-fill{% else %}bi-exclamation-octagon-fill{% endif %} fs-5"></i>
+            <div>[{{ scan_result.performative }}] {{ scan_result.reason }}</div>
+          </div>
+        {% endif %}
 
-      <form method="post" action="/staff/scanner" id="scanForm">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <div class="mb-3">
-          <label class="form-label">Active Event at Gate</label>
-          <select name="event_id" class="form-select" required>
-            {% for ev in events %}
-              <option value="{{ ev.id }}" {% if ev.id == selected_id %}selected{% endif %}>{{ ev.title }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Ticket QR Code (Camera Auto-fill or Manual Entry)</label>
-          <input type="text" name="code" id="codeInput" class="form-control form-control-lg" placeholder="EVT-XXXXXXXXXXXXXXXX" required>
-        </div>
-        <button type="submit" class="btn btn-dark w-100 btn-lg">Verify Ticket with TicketAgent</button>
-      </form>
+        <div id="reader" class="reader-box mb-4"></div>
+
+        <form method="post" action="/staff/scanner" id="scanForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+          <div class="mb-3">
+            <label class="field-label">Active Event at Gate</label>
+            <select name="event_id" class="form-select" required>
+              {% for ev in events %}
+                <option value="{{ ev.id }}" {% if ev.id == selected_id %}selected{% endif %}>{{ ev.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label class="field-label">Ticket QR Code (Camera Auto-fill or Manual Entry)</label>
+            <input type="text" name="code" id="codeInput" class="form-control form-control-lg font-monospace" placeholder="EVT-XXXXXXXXXXXXXXXX" required>
+          </div>
+
+          <button type="submit" class="btn btn-es-dark w-100 btn-lg">
+            <i class="bi bi-patch-check me-1"></i> Verify Ticket with TicketAgent
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 </div>
@@ -48,4 +133,4 @@
     ).catch(() => {});
   } catch (e) {}
 </script>
-{% endblock %}
+{% endblock %} 

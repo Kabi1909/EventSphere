@@ -1,46 +1,631 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="p-4 mb-4 bg-primary text-white rounded-4">
-  <h1 class="h3 fw-bold mb-1">Campus Events & Space Booking</h1>
-  <p class="mb-0 small opacity-75">Every seat, waitlist hold, and venue slot is negotiated by autonomous software agents.</p>
-</div>
+<style>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-<form method="get" action="/" class="row g-2 mb-4">
-  <div class="col-12 col-md-6">
-    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search events by title or keyword...">
-  </div>
-  <div class="col-8 col-md-4">
-    <select name="category" class="form-select">
-      <option value="">All Categories</option>
-      {% for cat in categories %}
-        <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-4 col-md-2">
-    <button class="btn btn-dark w-100" type="submit">Filter</button>
-  </div>
-</form>
+  .card-animate {
+    opacity: 0;
+    animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 
-<div class="row g-3">
-  {% for ev in events %}
-  <div class="col-12 col-md-6 col-lg-4">
-    <div class="card h-100">
-      <img src="{{ ev.image_url or ev.venue.image_url }}" class="card-img-top" style="height: 170px; object-fit: cover;" alt="{{ ev.title }}"> 
-      <div class="card-body d-flex flex-column">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="badge bg-secondary">{{ ev.category }}</span>
-          <small class="text-muted">{{ ev.start_time.strftime('%b %d, %H:%M') }}</small>
-        </div>
-        <h5 class="card-title fw-bold">{{ ev.title }}</h5>
-        <p class="text-muted small mb-2">Venue: {{ ev.venue.name }}</p>
-        <p class="card-text small flex-grow-1">{{ ev.description[:110] }}...</p>
-        <a href="/events/{{ ev.id }}" class="btn btn-primary w-100 mt-2">View Tickets</a>
-      </div>
+  /* Hero Banner with Layered Navy-to-Royal-Blue Gradient & Radial Glows */
+  .hero-banner {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 52%, #2563eb 100%);
+    padding: 3.25rem 2.25rem 4.6rem 2.25rem;
+    color: #ffffff;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+  }
+
+  .hero-banner::before {
+    content: "";
+    position: absolute;
+    top: -35%;
+    right: -10%;
+    width: 440px;
+    height: 440px;
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, rgba(37, 99, 235, 0) 70%);
+    pointer-events: none;
+  }
+
+  .hero-banner::after {
+    content: "";
+    position: absolute;
+    bottom: -45%;
+    left: -8%;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(15, 23, 42, 0) 70%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 760px;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    color: #e0e7ff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+  }
+
+  .hero-title {
+    font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.18;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.03rem;
+    color: #dbeafe;
+    line-height: 1.55;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .hero-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+    color: #f8fafc;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.42rem 0.95rem;
+    border-radius: 999px;
+  }
+
+  .hero-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+  }
+
+  /* Floating Glass Search & Filter Card */
+  .floating-filter-card {
+    position: relative;
+    z-index: 10;
+    margin: -36px auto 2.35rem auto;
+    max-width: 1040px;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(14px);
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.15rem 1.35rem;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.09);
+  }
+
+  .search-input-group .input-group-text {
+    background-color: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    color: #64748b;
+  }
+
+  .search-input-group .form-control {
+    background-color: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    padding: 0.62rem 0.9rem 0.62rem 0.25rem;
+    font-size: 0.93rem;
+    color: #0f172a;
+  }
+
+  .search-input-group .form-control:focus {
+    background-color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: none;
+  }
+
+  .search-input-group:focus-within .input-group-text,
+  .search-input-group:focus-within .form-control {
+    background-color: #ffffff;
+    border-color: #2563eb;
+  }
+
+  .search-input-group:focus-within {
+    border-radius: 10px;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+
+  .floating-filter-card .form-select {
+    background-color: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0.62rem 0.9rem;
+    font-size: 0.93rem;
+    color: #0f172a;
+    transition: all 0.18s ease;
+  }
+
+  .floating-filter-card .form-select:focus {
+    background-color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+
+  .btn-filter-es {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.62rem 1.25rem;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+    transition: all 0.18s ease;
+  }
+
+  .btn-filter-es:hover {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  /* Quick Category Filter Pills */
+  .quick-pills-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .quick-pill-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-right: 0.25rem;
+  }
+
+  .cat-pill {
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.32rem 0.85rem;
+    border-radius: 999px;
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    transition: all 0.15s ease;
+  }
+
+  .cat-pill:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .cat-pill.active {
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28);
+  }
+
+  /* Event Cards with Image Zoom, Price Overlay & Seat Progress Bar */
+  .event-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background-color: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .event-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.09);
+  }
+
+  .event-img-wrap {
+    position: relative;
+    height: 190px;
+    overflow: hidden;
+    background-color: #e2e8f0;
+  }
+
+  .event-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+  }
+
+  .event-card:hover .event-img-wrap img {
+    transform: scale(1.04);
+  }
+
+  .price-overlay-pill {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(15, 23, 42, 0.86);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.34rem 0.78rem;
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .event-cat-badge {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+  }
+
+  .seat-availability-box {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.55rem 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+  }
+
+  .seat-progress-track {
+    width: 100%;
+    height: 5px;
+    background-color: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 0.45rem;
+  }
+
+  .seat-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  .seat-fill-green { background-color: #16a34a; }
+  .seat-fill-amber { background-color: #f59e0b; }
+  .seat-fill-red   { background-color: #dc2626; }
+
+  .seat-badge-available {
+    background-color: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  .seat-badge-fast {
+    background-color: #fef3c7;
+    color: #b45309;
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  .seat-badge-soldout {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  .btn-view-tickets {
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+    transition: all 0.18s ease;
+  }
+
+  .btn-view-tickets:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.32);
+  }
+
+  /* Private Venue Hire Callout Banner */
+  .venue-callout-banner {
+    margin-top: 3rem;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid #334155;
+    padding: 2rem 2.25rem;
+    color: #ffffff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  }
+
+  .btn-venue-cta {
+    background-color: #ffffff;
+    color: #0f172a;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    padding: 0.65rem 1.35rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    transition: all 0.18s ease;
+    white-space: nowrap;
+  }
+
+  .btn-venue-cta:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    transform: translateY(-2px);
+  }
+
+  /* Polished Empty State */
+  .empty-state-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  }
+
+  .empty-icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-size: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<!-- Upgraded Hero Banner -->
+<section class="hero-banner">
+  <div class="hero-content">
+    <div class="hero-eyebrow">
+      <span class="hero-dot"></span>
+      <span>Autonomous Multi-Agent Ticketing &amp; Venues</span>
+    </div>
+    <h1 class="hero-title">Campus Events &amp; Space Booking</h1>
+    <p class="hero-subtitle">
+      Real-time seat reservations, venue scheduling, and QR ticketing powered by autonomous agents.
+    </p>
+    <div class="hero-pills">
+      <span class="hero-stat-pill">
+        <i class="bi bi-broadcast text-info"></i>
+        {{ events|length }} Live Event{{ 's' if events|length != 1 else '' }}
+      </span>
+      <span class="hero-stat-pill">
+        <i class="bi bi-qr-code text-info"></i>
+        Instant QR Pass
+      </span>
+      <span class="hero-stat-pill">
+        <i class="bi bi-patch-check text-info"></i>
+        Verified Venues
+      </span>
     </div>
   </div>
-  {% else %}
-  <div class="col-12"><div class="alert alert-light">No published events match your filter.</div></div>
-  {% endfor %}
+</section>
+
+<!-- Floating Glass Search & Filter Card -->
+<div class="floating-filter-card">
+  <form method="get" action="/" class="row g-2 align-items-center">
+    <div class="col-12 col-md-6">
+      <div class="input-group search-input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input
+          type="text"
+          name="q"
+          class="form-control"
+          placeholder="Search events by title or keyword..."
+          value="{{ q }}"
+        >
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <select name="category" class="form-select">
+        <option value="">All Categories</option>
+        {% for c in categories %}
+          <option value="{{ c }}" {% if category == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-2 d-grid">
+      <button type="submit" class="btn btn-filter-es">
+        <i class="bi bi-sliders2 me-1"></i> Filter
+      </button>
+    </div>
+  </form>
+
+  <!-- Quick Category Filter Pills -->
+  <div class="quick-pills-bar">
+    <span class="quick-pill-label"><i class="bi bi-tag me-1"></i>Quick Browse:</span>
+    <a href="/{% if q %}?q={{ q }}{% endif %}" class="cat-pill {% if not category %}active{% endif %}">
+      All
+    </a>
+    {% for c in ['Conference', 'Workshop', 'Seminar', 'Concert'] %}
+      <a href="/?category={{ c }}{% if q %}&q={{ q }}{% endif %}" class="cat-pill {% if category == c %}active{% endif %}">
+        {{ c }}
+      </a>
+    {% endfor %}
+
+    {% if q or category %}
+      <a href="/" class="ms-auto small text-decoration-none text-muted fw-semibold">
+        <i class="bi bi-x-circle me-1"></i>Reset Filters
+      </a>
+    {% endif %}
+  </div>
 </div>
-{% endblock %}
+
+<!-- Published Events Grid -->
+{% if events %}
+  <div class="row g-4">
+    {% for ev in events %}
+      {# Compute minimum ticket price and live seat inventory across tiers #}
+      {% set t_ns = namespace(min_price=none, rem=0, tot=0) %}
+      {% for t in ev.ticket_tiers %}
+        {% set t_ns.rem = t_ns.rem + t.remaining_qty %}
+        {% set t_ns.tot = t_ns.tot + t.total_qty %}
+        {% if t_ns.min_price is none or t.price < t_ns.min_price %}
+          {% set t_ns.min_price = t.price %}
+        {% endif %}
+      {% endfor %}
+
+      {% set sold_qty = t_ns.tot - t_ns.rem %}
+      {% set fill_pct = ((sold_qty / t_ns.tot) * 100)|round|int if t_ns.tot > 0 else 0 %}
+
+      <div class="col-12 col-md-6 col-lg-4 card-animate" style="animation-delay: {{ loop.index0 * 0.07 }}s;">
+        <div class="event-card h-100 d-flex flex-column">
+          <div class="event-img-wrap">
+            <img
+              src="{{ ev.image_url or ev.venue.image_url or 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800' }}"
+              alt="{{ ev.title }}"
+            >
+            {% if t_ns.min_price is not none %}
+              <span class="price-overlay-pill">
+                <i class="bi bi-tag-fill text-info"></i>
+                {% if t_ns.min_price == 0 %}
+                  Free Entry
+                {% else %}
+                  Starting from LKR {{ '%.2f'|format(t_ns.min_price) }}
+                {% endif %}
+              </span>
+            {% endif %}
+          </div>
+
+          <div class="p-4 d-flex flex-column flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="event-cat-badge">{{ ev.category }}</span>
+              <small class="text-muted fw-semibold">
+                <i class="bi bi-clock me-1"></i>{{ ev.start_time.strftime('%b %d, %H:%M') }}
+              </small>
+            </div>
+
+            <h5 class="fw-bold text-dark mb-1">{{ ev.title }}</h5>
+            <div class="small text-secondary fw-medium mb-2">
+              <i class="bi bi-geo-alt-fill text-primary me-1"></i>{{ ev.venue.name }}
+            </div>
+
+            <p class="text-muted small mb-3">
+              {% if ev.description %}
+                {{ ev.description[:115] }}{% if ev.description|length > 115 %}...{% endif %}
+              {% else %}
+                Official campus event hosted at {{ ev.venue.name }}.
+              {% endif %}
+            </p>
+
+            <!-- Live Seat Availability & Slim 5px Progress Bar -->
+            <div class="seat-availability-box mt-auto">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-secondary fw-semibold">
+                  <i class="bi bi-people-fill me-1"></i>Seats: <strong class="text-dark">{{ t_ns.rem }}</strong> / {{ t_ns.tot }}
+                </span>
+                {% if t_ns.tot > 0 and t_ns.rem == 0 %}
+                  <span class="seat-badge-soldout">Sold Out</span>
+                {% elif t_ns.tot > 0 and (t_ns.rem <= 10 or fill_pct >= 70) %}
+                  <span class="seat-badge-fast">Selling Fast</span>
+                {% else %}
+                  <span class="seat-badge-available">Available</span>
+                {% endif %}
+              </div>
+              <div class="seat-progress-track" title="{{ fill_pct }}% booked">
+                <div
+                  class="seat-progress-fill {% if t_ns.tot > 0 and t_ns.rem == 0 %}seat-fill-red{% elif t_ns.tot > 0 and (t_ns.rem <= 10 or fill_pct >= 70) %}seat-fill-amber{% else %}seat-fill-green{% endif %}"
+                  style="width: {{ fill_pct }}%;"
+                ></div>
+              </div>
+            </div>
+
+            <a href="/events/{{ ev.id }}" class="btn btn-view-tickets w-100">
+              <i class="bi bi-ticket-detailed me-1"></i> View Tickets
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <!-- Polished Empty State for Zero Search Results -->
+  <div class="empty-state-card">
+    <div class="empty-icon-circle">
+      <i class="bi bi-calendar-x"></i>
+    </div>
+    <h5 class="fw-bold text-dark mb-1">No Matching Events Found</h5>
+    <p class="text-muted small mb-3 mx-auto" style="max-width: 420px;">
+      We couldn't find any published campus events matching your current search or category filter.
+    </p>
+    <a href="/" class="btn btn-view-tickets px-4">
+      <i class="bi bi-arrow-counterclockwise me-1"></i> Clear Filters
+    </a>
+  </div>
+{% endif %}
+
+<!-- Private Venue Hire Callout Banner -->
+<section class="venue-callout-banner">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+      <span class="badge bg-info-subtle text-info-emphasis mb-2 px-2.5 py-1 fw-bold">
+        <i class="bi bi-building-add me-1"></i> Campus Space Reservation
+      </span>
+      <h4 class="fw-bold mb-1">Hosting a Student Club Event or Seminar?</h4>
+      <p class="text-light opacity-75 small mb-0">
+        Request auditoriums, seminar halls, or open amphitheatres directly with instant clash checks and automated quotes from VenueAgent.
+      </p>
+    </div>
+    <a href="/venue-hire" class="btn btn-venue-cta">
+      <i class="bi bi-calendar-plus me-1"></i> Hire a Venue
+    </a>
+  </div>
+</section>
+{% endblock %} 
