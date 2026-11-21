@@ -525,7 +525,7 @@
       {% set sold_qty = t_ns.tot - t_ns.rem %}
       {% set fill_pct = ((sold_qty / t_ns.tot) * 100)|round|int if t_ns.tot > 0 else 0 %}
 
-      <div class="col-12 col-md-6 col-lg-4 card-animate" style="animation-delay: {{ loop.index0 * 0.07 }}s;">
+      <div class="col-12 col-md-6 col-lg-4 card-animate" data-delay="{{ loop.index0 * 0.07 }}">
         <div class="event-card h-100 d-flex flex-column">
           <div class="event-img-wrap">
             <img
@@ -582,7 +582,7 @@
               <div class="seat-progress-track" title="{{ fill_pct }}% booked">
                 <div
                   class="seat-progress-fill {% if t_ns.tot > 0 and t_ns.rem == 0 %}seat-fill-red{% elif t_ns.tot > 0 and (t_ns.rem <= 10 or fill_pct >= 70) %}seat-fill-amber{% else %}seat-fill-green{% endif %}"
-                  style="width: {{ fill_pct }}%;"
+                  data-width="{{ fill_pct }}"
                 ></div>
               </div>
             </div>
@@ -630,4 +630,13 @@
   </div>
 </section>
 {% endif %}
+
+<script>
+  document.querySelectorAll('[data-delay]').forEach(el => {
+    el.style.animationDelay = el.dataset.delay + 's';
+  });
+  document.querySelectorAll('[data-width]').forEach(el => {
+    el.style.width = el.dataset.width + '%';
+  });
+</script>
 {% endblock %} 
