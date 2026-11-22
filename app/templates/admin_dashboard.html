@@ -15,7 +15,7 @@
 
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: none; }
   }
   .dash-animate {
     opacity: 0;
@@ -205,6 +205,38 @@
   }
   .section-icon-dark { background-color: #f1f5f9; color: #0f172a; }
 
+  /* Venue Mode Switcher (Add vs Edit) */
+  .venue-mode-switcher {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    background-color: #f1f5f9;
+    border: 1px solid var(--es-border);
+    border-radius: 11px;
+    padding: 0.28rem;
+    margin-bottom: 1rem;
+  }
+  .venue-mode-btn {
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--es-slate-700);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.45rem 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    transition: all 0.16s ease;
+  }
+  .venue-mode-btn.active {
+    background-color: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  }
+
   /* Event Thumbnail & Category Badge */
   .event-thumb {
     width: 44px;
@@ -308,6 +340,15 @@
     font-size: 0.82rem;
     color: #1e3a8a;
   }
+  .form-inline-warn {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    border-radius: 10px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
 
   /* Primary & Solid Filled Action Buttons */
   .btn-es-primary {
@@ -372,7 +413,7 @@
   }
   .btn-action-cancel:hover { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; }
 
-  /* Occupancy Bar & Modal Header */
+  /* Occupancy Bar & Modal Headers */
   .mini-progress-track {
     width: 92px;
     height: 5px;
@@ -389,6 +430,35 @@
     border-bottom: none;
   }
   .es-modal-header .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+  /* Confirmation & Success Modal Visuals */
+  .modal-icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
+  .modal-icon-danger {
+    background-color: #fee2e2;
+    color: #dc2626;
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.12);
+  }
+  .modal-icon-success {
+    background-color: #dcfce7;
+    color: #16a34a;
+    box-shadow: 0 0 0 8px rgba(22, 163, 74, 0.12);
+  }
+  .cancel-summary-box {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    text-align: left;
+  }
 
   /* Escalated Hires Banner */
   .escalated-card {
@@ -547,6 +617,11 @@
   }
 </style>
 
+<!-- Flash Metadata Hook for Automatic Success Modal -->
+{% if flash %}
+  <div id="esFlashMeta" class="d-none" data-category="{{ flash.category }}" data-msg="{{ flash.msg }}"></div>
+{% endif %}
+
 <!-- Upgraded Hero Header -->
 <section class="admin-hero dash-animate">
   <div class="admin-hero-inner d-flex flex-wrap justify-content-between align-items-start align-items-md-center gap-3">
@@ -590,7 +665,7 @@
       <div class="kpi-card d-flex align-items-center justify-content-between gap-2">
         <div>
           <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Tickets Sold</div>
-          <div class="fs-3 fw-bold text-primary mt-1">{{ ns.total_sold }} <span class="text-muted fw-semibold fs-5">/ {{ ns.total_cap }}</span></div>
+          <div class="fs-3 fw-bold text-primary mt-1">{{ ns.total_sold }} <span class="text-muted">/ {{ ns.total_cap }}</span></div>
         </div>
         <div class="kpi-icon-box kpi-icon-indigo"><i class="bi bi-ticket-perforated-fill"></i></div>
       </div>
@@ -627,7 +702,7 @@
       <i class="bi bi-exclamation-triangle-fill"></i> Escalated Hires ({{ escalated_hires|length }})
     </a>
   {% endif %}
-  <a href="#section-forms" class="jump-pill"><i class="bi bi-plus-circle"></i> Create Venue &amp; Event</a>
+  <a href="#section-forms" class="jump-pill"><i class="bi bi-plus-circle"></i> Manage Venues &amp; Events</a>
   <a href="#section-beliefs" class="jump-pill"><i class="bi bi-cpu"></i> Agent Beliefs</a>
   <a href="#section-logs" class="jump-pill"><i class="bi bi-journal-code"></i> Message Bus Log</a>
 </nav>
@@ -717,19 +792,28 @@
               <button type="button" class="btn btn-action-pill btn-action-edit" data-bs-toggle="modal" data-bs-target="#editEventModal{{ s.event.id }}">
                 <i class="bi bi-pencil-square"></i> Edit
               </button>
-              <form method="post" action="/admin/events/{{ s.event.id }}/status" class="d-inline-flex align-items-center flex-nowrap gap-2 m-0">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                {% if s.event.status == 'draft' %}
-                  <button name="new_status" value="published" class="btn btn-action-pill btn-action-publish">
+              {% if s.event.status == 'draft' %}
+                <form method="post" action="/admin/events/{{ s.event.id }}/status" class="d-inline-flex m-0" data-admin-action="publish_event">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit" name="new_status" value="published" class="btn btn-action-pill btn-action-publish">
                     <i class="bi bi-broadcast"></i> Publish
                   </button>
-                {% endif %}
-                {% if s.event.status != 'cancelled' %}
-                  <button name="new_status" value="cancelled" class="btn btn-action-pill btn-action-cancel">
-                    <i class="bi bi-trash3-fill"></i> Cancel
-                  </button>
-                {% endif %}
-              </form>
+                </form>
+              {% endif %}
+              {% if s.event.status != 'cancelled' %}
+                <button
+                  type="button"
+                  class="btn btn-action-pill btn-action-cancel btn-cancel-trigger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#confirmCancelModal"
+                  data-cancel-url="/admin/events/{{ s.event.id }}/status"
+                  data-event-title="{{ s.event.title }}"
+                  data-event-venue="{{ s.event.venue.name }}"
+                  data-event-time="{{ s.event.start_time.strftime('%Y-%m-%d %H:%M') }} – {{ s.event.end_time.strftime('%H:%M') }}"
+                >
+                  <i class="bi bi-trash3-fill"></i> Cancel
+                </button>
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -737,67 +821,6 @@
       </tbody>
     </table>
   </div>
-
-  <!-- Edit Event Modals -->
-  {% for s in event_stats %}
-  <div class="modal fade" id="editEventModal{{ s.event.id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-        <form method="post" action="/admin/events/{{ s.event.id }}/edit">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <div class="modal-header es-modal-header">
-            <h5 class="modal-title fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Event: {{ s.event.title }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body p-4">
-            <div class="mb-3">
-              <label class="field-label">Event Title</label>
-              <input type="text" name="title" class="form-control" value="{{ s.event.title }}" required>
-            </div>
-            <div class="row g-3 mb-3">
-              <div class="col-6">
-                <label class="field-label">Category</label>
-                <select name="category" class="form-select">
-                  {% for cat in ['Conference', 'Concert', 'Workshop', 'Seminar'] %}
-                    <option value="{{ cat }}" {% if s.event.category == cat %}selected{% endif %}>{{ cat }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-6">
-                <label class="field-label">Venue</label>
-                <select name="venue_id" class="form-select">
-                  {% for v in venues %}
-                    <option value="{{ v.id }}" {% if s.event.venue_id == v.id %}selected{% endif %}>{{ v.name }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-            <div class="row g-3 mb-3">
-              <div class="col-6">
-                <label class="field-label">Start Time</label>
-                <input type="datetime-local" name="start_time" class="form-control" value="{{ s.event.start_time.strftime('%Y-%m-%dT%H:%M') }}" required>
-              </div>
-              <div class="col-6">
-                <label class="field-label">End Time</label>
-                <input type="datetime-local" name="end_time" class="form-control" value="{{ s.event.end_time.strftime('%Y-%m-%dT%H:%M') }}" required>
-              </div>
-            </div>
-            <div class="mb-2">
-              <label class="field-label">Description</label>
-              <textarea name="description" class="form-control" rows="3">{{ s.event.description or '' }}</textarea>
-            </div>
-          </div>
-          <div class="modal-footer bg-light border-top px-4 py-3">
-            <button type="button" class="btn btn-outline-secondary btn-action-pill" data-bs-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-es-primary px-4 py-2">
-              <i class="bi bi-check2-circle me-1"></i> Save Changes
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  {% endfor %}
 </section>
 
 <!-- Escalated Private Hire Approvals -->
@@ -820,10 +843,10 @@
       </div>
       <form method="post" action="/admin/hires/{{ h.id }}/decide" class="d-inline-flex flex-nowrap gap-2 m-0">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button name="decision" value="approve" class="btn btn-action-pill btn-action-publish">
+        <button type="submit" name="decision" value="approve" class="btn btn-action-pill btn-action-publish">
           <i class="bi bi-check-lg"></i> Approve
         </button>
-        <button name="decision" value="reject" class="btn btn-action-pill btn-action-cancel">
+        <button type="submit" name="decision" value="reject" class="btn btn-action-pill btn-action-cancel">
           <i class="bi bi-x-lg"></i> Reject
         </button>
       </form>
@@ -832,22 +855,34 @@
 </section>
 {% endif %}
 
-<!-- Create Venue & Create Event -->
+<!-- Create / Edit Venue & Create Event -->
 <section id="section-forms" class="row g-4 mb-4 dash-animate dash-section-anchor" data-delay="0.18">
-  <!-- Add New Venue Card -->
+  <!-- Manage Venues Card (Add New Venue + Edit Existing Venue) -->
   <div class="col-12 col-lg-5">
     <div class="dashboard-card form-card-venue p-4 h-100 d-flex flex-column">
       <div class="mb-3 pb-3 border-bottom d-flex align-items-start gap-2">
-        <span class="section-icon-badge section-icon-dark mt-1"><i class="bi bi-building-add"></i></span>
+        <span class="section-icon-badge section-icon-dark mt-1"><i class="bi bi-building-gear"></i></span>
         <div>
-          <h5 class="dashboard-section-title mb-1">Add New Venue</h5>
-          <p class="text-muted small mb-0">Register campus halls and outdoor spaces for scheduling</p>
+          <h5 class="dashboard-section-title mb-1" id="venueCardHeading">Add New Venue</h5>
+          <p class="text-muted small mb-0" id="venueCardSubtext">Register campus halls and outdoor spaces for scheduling</p>
         </div>
       </div>
 
-      <form method="post" action="/admin/venues" class="d-flex flex-column flex-grow-1">
+      <!-- Mode Switcher: Create Venue vs Edit Venue -->
+      <div class="venue-mode-switcher" role="tablist">
+        <button type="button" class="venue-mode-btn active" id="tabCreateVenue" data-venue-mode="create">
+          <i class="bi bi-plus-circle"></i> Add New Venue
+        </button>
+        <button type="button" class="venue-mode-btn" id="tabEditVenue" data-venue-mode="edit" {% if not venues %}disabled{% endif %}>
+          <i class="bi bi-pencil-square"></i> Edit Venue
+        </button>
+      </div>
+
+      <!-- CREATE VENUE FORM -->
+      <form method="post" action="/admin/venues" id="createVenueForm" class="d-flex flex-column flex-grow-1" data-admin-action="create_venue">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="is_private_hire_open" value="1">
+        <input type="hidden" name="image_url" value="">
 
         <div class="mb-3">
           <label class="field-label">Venue Name</label>
@@ -861,7 +896,11 @@
           <label class="field-label">Location / Block</label>
           <div class="input-group es-input-group">
             <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-            <input type="text" name="location" class="form-control" placeholder="e.g., Faculty of Applied Science" required>
+            <select name="location" class="form-select" required>
+              <option value="Faculty of Applied Science">Faculty of Applied Science</option>
+              <option value="Faculty of Business Studies">Faculty of Business Studies</option>
+              <option value="Faculty of Technology">Faculty of Technology</option>
+            </select>
           </div>
         </div>
 
@@ -870,23 +909,15 @@
             <label class="field-label">Max Capacity</label>
             <div class="input-group es-input-group">
               <span class="input-group-text"><i class="bi bi-people"></i></span>
-              <input type="number" name="capacity" class="form-control" placeholder="300" required>
+              <input type="number" name="capacity" min="1" class="form-control" placeholder="300" required>
             </div>
           </div>
           <div class="col-6">
             <label class="field-label">Hourly Rate (LKR)</label>
             <div class="input-group es-input-group">
               <span class="input-group-text"><i class="bi bi-cash"></i></span>
-              <input type="number" step="0.01" name="hourly_rate" class="form-control" placeholder="15000.00" required>
+              <input type="number" step="0.01" min="0" name="hourly_rate" class="form-control" placeholder="15000.00" required>
             </div>
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label class="field-label">Venue Image URL (Optional)</label>
-          <div class="input-group es-input-group">
-            <span class="input-group-text"><i class="bi bi-image"></i></span>
-            <input type="url" name="image_url" class="form-control" placeholder="https://example.com/venue.jpg">
           </div>
         </div>
 
@@ -898,8 +929,87 @@
           </div>
         </div>
 
-        <button class="btn btn-es-dark w-100 mt-auto">
+        <button type="submit" class="btn btn-es-dark w-100 mt-auto">
           <i class="bi bi-plus-circle me-1"></i> Create Venue
+        </button>
+      </form>
+
+      <!-- EDIT VENUE FORM -->
+      <form method="post" action="" id="editVenueForm" class="d-none flex-column flex-grow-1" data-admin-action="edit_venue">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="is_private_hire_open" id="editVenuePrivateHire" value="1">
+        <input type="hidden" name="image_url" id="editVenueImageUrl" value="">
+
+        <div class="mb-3">
+          <label class="field-label">Select Venue to Edit</label>
+          <div class="input-group es-input-group">
+            <span class="input-group-text"><i class="bi bi-list-ul"></i></span>
+            <select id="editVenueSelector" class="form-select" required>
+              {% for v in venues %}
+                <option
+                  value="{{ v.id }}"
+                  data-name="{{ v.name }}"
+                  data-location="{{ v.location or '' }}"
+                  data-capacity="{{ v.capacity }}"
+                  data-rate="{{ '%.2f'|format(v.hourly_rate) }}"
+                  data-description="{{ v.description or '' }}"
+                  data-image="{{ v.image_url or '' }}"
+                  data-hire="{{ '1' if v.is_private_hire_open else '0' }}"
+                >
+                  {{ v.name }} (Cap: {{ v.capacity }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="field-label">Venue Name</label>
+          <div class="input-group es-input-group">
+            <span class="input-group-text"><i class="bi bi-building"></i></span>
+            <input type="text" name="name" id="editVenueName" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="field-label">Location / Block</label>
+          <div class="input-group es-input-group">
+            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+            <select name="location" id="editVenueLocation" class="form-select" required>
+              <option value="Faculty of Applied Science">Faculty of Applied Science</option>
+              <option value="Faculty of Business Studies">Faculty of Business Studies</option>
+              <option value="Faculty of Technology">Faculty of Technology</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="field-label">Max Capacity</label>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-people"></i></span>
+              <input type="number" name="capacity" id="editVenueCapacity" min="1" class="form-control" required>
+            </div>
+          </div>
+          <div class="col-6">
+            <label class="field-label">Hourly Rate (LKR)</label>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-cash"></i></span>
+              <input type="number" step="0.01" min="0" name="hourly_rate" id="editVenueRate" class="form-control" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="field-label">Facilities &amp; Description</label>
+          <div class="input-group es-input-group">
+            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+            <input type="text" name="description" id="editVenueDescription" class="form-control">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-es-primary w-100 mt-auto">
+          <i class="bi bi-check2-circle me-1"></i> Save Venue Changes
         </button>
       </form>
     </div>
@@ -916,7 +1026,7 @@
         </div>
       </div>
 
-      <form method="post" action="/admin/events" enctype="multipart/form-data" class="d-flex flex-column flex-grow-1">
+      <form method="post" action="/admin/events" enctype="multipart/form-data" id="createEventForm" class="d-flex flex-column flex-grow-1" data-admin-action="create_event">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
         <div class="row g-3 mb-3">
@@ -946,9 +1056,9 @@
             <label class="field-label">Select Venue</label>
             <div class="input-group es-input-group">
               <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-              <select name="venue_id" class="form-select">
+              <select name="venue_id" id="eventVenueSelect" class="form-select" required>
                 {% for v in venues %}
-                  <option value="{{ v.id }}">{{ v.name }} (Cap: {{ v.capacity }})</option>
+                  <option value="{{ v.id }}" data-capacity="{{ v.capacity }}">{{ v.name }} (Cap: {{ v.capacity }})</option>
                 {% endfor %}
               </select>
             </div>
@@ -970,14 +1080,14 @@
             <label class="field-label">Start Date &amp; Time</label>
             <div class="input-group es-input-group">
               <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-              <input type="datetime-local" name="start_time" class="form-control" required>
+              <input type="datetime-local" name="start_time" id="eventStartInput" class="form-control" required>
             </div>
           </div>
           <div class="col-12 col-md-6">
             <label class="field-label">End Date &amp; Time</label>
             <div class="input-group es-input-group">
               <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
-              <input type="datetime-local" name="end_time" class="form-control" required>
+              <input type="datetime-local" name="end_time" id="eventEndInput" class="form-control" required>
             </div>
           </div>
         </div>
@@ -994,17 +1104,20 @@
             <label class="field-label">Ticket Price (LKR)</label>
             <div class="input-group es-input-group">
               <span class="input-group-text"><i class="bi bi-currency-exchange"></i></span>
-              <input type="number" step="0.01" name="tier_price" id="tierPriceInput" class="form-control" placeholder="1000.00" required>
+              <input type="number" step="0.01" min="0" name="tier_price" id="tierPriceInput" class="form-control" placeholder="1000.00" required>
             </div>
           </div>
           <div class="col-6 col-md-4">
-            <label class="field-label">Seat Quantity</label>
+            <label class="field-label">Seat Quantity <span id="venueCapHint" class="text-primary fw-bold"></span></label>
             <div class="input-group es-input-group">
               <span class="input-group-text"><i class="bi bi-123"></i></span>
-              <input type="number" name="tier_qty" id="tierQtyInput" class="form-control" placeholder="100" required>
+              <input type="number" min="1" name="tier_qty" id="tierQtyInput" class="form-control" placeholder="100" required>
             </div>
           </div>
         </div>
+
+        <!-- Inline Validation Warning (Capacity / Time Range) -->
+        <div id="eventFormWarning" class="form-inline-warn d-none mb-2"></div>
 
         <!-- Live Potential Revenue Preview -->
         <div class="revenue-preview-box mb-3">
@@ -1025,7 +1138,7 @@
           <input type="file" name="image_file" accept="image/*" class="form-control">
         </div>
 
-        <button class="btn btn-es-primary w-100 mt-auto">
+        <button type="submit" class="btn btn-es-primary w-100 mt-auto">
           <i class="bi bi-send-check me-1"></i> Submit Event to VenueAgent
         </button>
       </form>
@@ -1214,7 +1327,128 @@
   </div>
 </section>
 
+<!-- Edit Event Modals (Placed OUTSIDE animated sections so backdrop never overlaps them) -->
+{% for s in event_stats %}
+<div class="modal fade es-root-modal" id="editEventModal{{ s.event.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      <form method="post" action="/admin/events/{{ s.event.id }}/edit" data-admin-action="edit_event">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="modal-header es-modal-header">
+          <h5 class="modal-title fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Event: {{ s.event.title }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="field-label">Event Title</label>
+            <input type="text" name="title" class="form-control" value="{{ s.event.title }}" required>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="field-label">Category</label>
+              <select name="category" class="form-select">
+                {% for cat in ['Conference', 'Concert', 'Workshop', 'Seminar'] %}
+                  <option value="{{ cat }}" {% if s.event.category == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="field-label">Venue</label>
+              <select name="venue_id" class="form-select">
+                {% for v in venues %}
+                  <option value="{{ v.id }}" {% if s.event.venue_id == v.id %}selected{% endif %}>{{ v.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="field-label">Start Time</label>
+              <input type="datetime-local" name="start_time" class="form-control" value="{{ s.event.start_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+            </div>
+            <div class="col-6">
+              <label class="field-label">End Time</label>
+              <input type="datetime-local" name="end_time" class="form-control" value="{{ s.event.end_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="field-label">Description</label>
+            <textarea name="description" class="form-control" rows="3">{{ s.event.description or '' }}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-top px-4 py-3">
+          <button type="button" class="btn btn-outline-secondary btn-action-pill" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-es-primary px-4 py-2">
+            <i class="bi bi-check2-circle me-1"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Confirm Event Cancellation / Deletion Modal -->
+<div class="modal fade es-root-modal" id="confirmCancelModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden;">
+      <form method="post" id="confirmCancelForm" action="" data-admin-action="cancel_event">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="new_status" value="cancelled">
+        <div class="modal-body p-4 text-center">
+          <div class="modal-icon-circle modal-icon-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Confirm Event Cancellation</h5>
+          <p class="text-muted small mb-3">
+            Are you sure you want to cancel this event? Attendees will no longer be able to book tickets for it.
+          </p>
+          <div class="cancel-summary-box mb-4">
+            <div class="fw-bold text-dark mb-1" id="cancelModalEventTitle">Selected Event</div>
+            <div class="small text-secondary">
+              <i class="bi bi-geo-alt me-1 text-danger"></i><span id="cancelModalEventVenue"></span>
+              &nbsp;&bull;&nbsp;
+              <i class="bi bi-clock me-1 text-danger"></i><span id="cancelModalEventTime"></span>
+            </div>
+          </div>
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold px-4 py-2" data-bs-dismiss="modal">
+              Keep Event
+            </button>
+            <button type="submit" class="btn btn-action-cancel rounded-3 fw-semibold px-4 py-2 border-0">
+              <i class="bi bi-trash3-fill me-1"></i> Yes, Cancel Event
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Automatic Action Success Modal (Cancel / Create Venue / Edit Venue / Create Event / Edit Event) -->
+<div class="modal fade es-root-modal" id="adminSuccessModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden;">
+      <div class="modal-body p-4 text-center">
+        <div class="modal-icon-circle modal-icon-success">
+          <i id="successModalIcon" class="bi bi-check-circle-fill"></i>
+        </div>
+        <h5 class="fw-bold text-dark mb-2" id="successModalTitle">Action Successful</h5>
+        <p class="text-muted small mb-4" id="successModalMsg">Your changes have been saved successfully.</p>
+        <button type="button" class="btn btn-es-primary px-5 py-2" data-bs-dismiss="modal">
+          <i class="bi bi-check2 me-1"></i> Done
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+  // 0. Guarantee all modals live directly under <body> so no parent stacking context ever traps them
+  document.querySelectorAll('.es-root-modal').forEach(modal => {
+    document.body.appendChild(modal);
+  });
+
   // 1. Linter-clean animation delays & occupancy bar widths
   document.querySelectorAll('[data-delay]').forEach(el => {
     el.style.animationDelay = el.dataset.delay + 's';
@@ -1229,13 +1463,193 @@
     if (card) card.classList.add('fraud-highlight');
   });
 
-  // 3. Live Potential Tier Revenue preview (Price x Seats)
+  // 3. Venue Form Mode Switcher (Add New Venue vs Edit Venue)
+  const createVenueForm = document.getElementById('createVenueForm');
+  const editVenueForm = document.getElementById('editVenueForm');
+  const venueCardHeading = document.getElementById('venueCardHeading');
+  const venueCardSubtext = document.getElementById('venueCardSubtext');
+  const editVenueSelector = document.getElementById('editVenueSelector');
+  const editVenueName = document.getElementById('editVenueName');
+  const editVenueLocation = document.getElementById('editVenueLocation');
+  const editVenueCapacity = document.getElementById('editVenueCapacity');
+  const editVenueRate = document.getElementById('editVenueRate');
+  const editVenueDescription = document.getElementById('editVenueDescription');
+  const editVenueImageUrl = document.getElementById('editVenueImageUrl');
+  const editVenuePrivateHire = document.getElementById('editVenuePrivateHire');
+
+  function populateEditVenueFields() {
+    if (!editVenueSelector || !editVenueSelector.options.length) return;
+    const opt = editVenueSelector.options[editVenueSelector.selectedIndex];
+    if (!opt) return;
+
+    editVenueForm.action = '/admin/venues/' + opt.value + '/edit';
+    editVenueName.value = opt.dataset.name || '';
+    editVenueCapacity.value = opt.dataset.capacity || '';
+    editVenueRate.value = opt.dataset.rate || '';
+    editVenueDescription.value = opt.dataset.description || '';
+    editVenueImageUrl.value = opt.dataset.image || '';
+    editVenuePrivateHire.value = opt.dataset.hire || '1';
+
+    // Select matching faculty location (fallback to first faculty if legacy location differs)
+    const loc = (opt.dataset.location || '').trim();
+    const matched = Array.from(editVenueLocation.options).find(
+      o => o.value.toLowerCase() === loc.toLowerCase()
+    );
+    editVenueLocation.value = matched ? matched.value : editVenueLocation.options[0].value;
+  }
+
+  document.querySelectorAll('[data-venue-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-venue-mode]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const isEdit = btn.dataset.venueMode === 'edit';
+      createVenueForm.classList.toggle('d-none', isEdit);
+      createVenueForm.classList.toggle('d-flex', !isEdit);
+      editVenueForm.classList.toggle('d-none', !isEdit);
+      editVenueForm.classList.toggle('d-flex', isEdit);
+      if (venueCardHeading) venueCardHeading.textContent = isEdit ? 'Edit Existing Venue' : 'Add New Venue';
+      if (venueCardSubtext) {
+        venueCardSubtext.textContent = isEdit
+          ? 'Update venue details, faculty location, capacity, or hourly hire rate'
+          : 'Register campus halls and outdoor spaces for scheduling';
+      }
+      if (isEdit) populateEditVenueFields();
+    });
+  });
+
+  editVenueSelector?.addEventListener('change', populateEditVenueFields);
+  populateEditVenueFields();
+
+  // 4. Populate Cancel Confirmation Modal dynamically
+  const cancelForm = document.getElementById('confirmCancelForm');
+  const cancelTitleEl = document.getElementById('cancelModalEventTitle');
+  const cancelVenueEl = document.getElementById('cancelModalEventVenue');
+  const cancelTimeEl = document.getElementById('cancelModalEventTime');
+
+  document.querySelectorAll('.btn-cancel-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (cancelForm) cancelForm.action = btn.dataset.cancelUrl || '';
+      if (cancelTitleEl) cancelTitleEl.textContent = btn.dataset.eventTitle || 'Selected Event';
+      if (cancelVenueEl) cancelVenueEl.textContent = btn.dataset.eventVenue || '';
+      if (cancelTimeEl) cancelTimeEl.textContent = btn.dataset.eventTime || '';
+    });
+  });
+
+  // 5. Track Admin Form Action in sessionStorage before submit (for tailored Success Modal)
+  document.querySelectorAll('form[data-admin-action]').forEach(form => {
+    form.addEventListener('submit', () => {
+      try {
+        sessionStorage.setItem('es_admin_action', form.dataset.adminAction);
+      } catch (e) {}
+    });
+  });
+
+  // 6. Trigger Success Modal automatically after Cancel / Create Venue / Edit Venue / Create Event / Edit Event
+  window.addEventListener('DOMContentLoaded', () => {
+    let lastAction = '';
+    try {
+      lastAction = sessionStorage.getItem('es_admin_action') || '';
+      sessionStorage.removeItem('es_admin_action');
+    } catch (e) {}
+
+    const flashMeta = document.getElementById('esFlashMeta');
+    if (!flashMeta) return;
+
+    const category = (flashMeta.dataset.category || '').toLowerCase();
+    const msg = flashMeta.dataset.msg || '';
+    const isError = category === 'danger' || category === 'warning' || category === 'error';
+
+    if (isError) {
+      const topAlert = document.querySelector('.alert-es');
+      if (topAlert) topAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const isTrackedAction = ['cancel_event', 'create_venue', 'edit_venue', 'create_event', 'edit_event', 'publish_event'].includes(lastAction);
+    if (category !== 'success' && !isTrackedAction) return;
+
+    const msgLower = msg.toLowerCase();
+    let title = 'Action Completed Successfully';
+    let iconClass = 'bi bi-check-circle-fill';
+
+    if (lastAction === 'cancel_event' || msgLower.includes('cancel')) {
+      title = 'Event Cancelled Successfully';
+      iconClass = 'bi bi-calendar-x-fill';
+    } else if (lastAction === 'edit_venue') {
+      title = 'Venue Updated Successfully';
+      iconClass = 'bi bi-building-check';
+    } else if (lastAction === 'create_venue' || msgLower.includes('venue')) {
+      title = 'Venue Created Successfully';
+      iconClass = 'bi bi-building-check';
+    } else if (lastAction === 'create_event' || msgLower.includes('created')) {
+      title = 'Event Created Successfully';
+      iconClass = 'bi bi-calendar-plus-fill';
+    } else if (lastAction === 'edit_event' || msgLower.includes('updated') || msgLower.includes('edited')) {
+      title = 'Event Updated Successfully';
+      iconClass = 'bi bi-pencil-square';
+    } else if (lastAction === 'publish_event' || msgLower.includes('publish')) {
+      title = 'Event Published Successfully';
+      iconClass = 'bi bi-broadcast';
+    }
+
+    const titleEl = document.getElementById('successModalTitle');
+    const msgEl = document.getElementById('successModalMsg');
+    const iconEl = document.getElementById('successModalIcon');
+    const modalEl = document.getElementById('adminSuccessModal');
+
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.textContent = msg;
+    if (iconEl) iconEl.className = iconClass;
+
+    if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+      const topAlert = document.querySelector('.alert-es');
+      if (topAlert && !topAlert.classList.contains('alert-danger') && !topAlert.classList.contains('alert-warning')) {
+        topAlert.classList.add('d-none');
+      }
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+  });
+
+  // 7. Live Potential Tier Revenue Preview + Venue Capacity & Time Validation on Create Event
+  const eventVenueSelect = document.getElementById('eventVenueSelect');
+  const eventStartInput = document.getElementById('eventStartInput');
+  const eventEndInput = document.getElementById('eventEndInput');
   const priceInput = document.getElementById('tierPriceInput');
   const qtyInput = document.getElementById('tierQtyInput');
+  const venueCapHint = document.getElementById('venueCapHint');
+  const eventFormWarning = document.getElementById('eventFormWarning');
   const revenueOut = document.getElementById('potentialRevenueValue');
-  function updateRevenuePreview() {
+
+  function validateCreateEventInputs() {
+    const selectedOpt = eventVenueSelect?.options[eventVenueSelect.selectedIndex];
+    const maxCap = parseInt(selectedOpt?.dataset.capacity || '0', 10) || 0;
     const price = parseFloat(priceInput?.value || '0') || 0;
     const qty = parseInt(qtyInput?.value || '0', 10) || 0;
+
+    if (venueCapHint && maxCap > 0) {
+      venueCapHint.textContent = '(Max ' + maxCap + ')';
+    }
+    if (qtyInput && maxCap > 0) {
+      qtyInput.max = String(maxCap);
+    }
+
+    const warnings = [];
+    if (maxCap > 0 && qty > maxCap) {
+      warnings.push('Seat quantity (' + qty + ') exceeds the selected venue capacity (' + maxCap + '). Reduce seats or choose a larger venue.');
+    }
+    if (eventStartInput?.value && eventEndInput?.value && eventEndInput.value <= eventStartInput.value) {
+      warnings.push('End Date & Time must be after Start Date & Time.');
+    }
+
+    if (eventFormWarning) {
+      if (warnings.length > 0) {
+        eventFormWarning.innerHTML = '<i class="bi bi-exclamation-circle-fill me-1"></i>' + warnings.join(' ');
+        eventFormWarning.classList.remove('d-none');
+      } else {
+        eventFormWarning.classList.add('d-none');
+      }
+    }
+
     const total = Math.max(0, price * qty);
     if (revenueOut) {
       revenueOut.textContent = 'LKR ' + total.toLocaleString(undefined, {
@@ -1244,10 +1658,15 @@
       });
     }
   }
-  priceInput?.addEventListener('input', updateRevenuePreview);
-  qtyInput?.addEventListener('input', updateRevenuePreview);
 
-  // 4. Client-side Agent Filter Pills for Persistent Beliefs
+  eventVenueSelect?.addEventListener('change', validateCreateEventInputs);
+  eventStartInput?.addEventListener('change', validateCreateEventInputs);
+  eventEndInput?.addEventListener('change', validateCreateEventInputs);
+  priceInput?.addEventListener('input', validateCreateEventInputs);
+  qtyInput?.addEventListener('input', validateCreateEventInputs);
+  validateCreateEventInputs();
+
+  // 8. Client-side Agent Filter Pills for Persistent Beliefs
   const beliefCols = document.querySelectorAll('.belief-col');
   const beliefCountEl = document.getElementById('beliefVisibleCount');
   document.querySelectorAll('#beliefFilterBar [data-filter-agent]').forEach(btn => {
@@ -1265,7 +1684,7 @@
     });
   });
 
-  // 5. Live Performative Filter + Keyword Search for Message Bus Log
+  // 9. Live Performative Filter + Keyword Search for Message Bus Log
   let activePerf = 'ALL';
   const logRows = document.querySelectorAll('#logTableBody .log-row');
   const logSearchInput = document.getElementById('logSearchInput');
@@ -1300,7 +1719,7 @@
   });
   logSearchInput?.addEventListener('input', applyLogFilters);
 
-  // 6. Click-to-Copy Conversation ID Badges
+  // 10. Click-to-Copy Conversation ID Badges
   document.querySelectorAll('.conv-copy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.copy;

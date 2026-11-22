@@ -495,7 +495,7 @@ async def admin_create_event(
         sender=f"Admin:{user.id}",
         receiver="VenueAgent",
         performative=Performative.REQUEST,
-        action="CHECK_EVENT_SLOT",
+        action="VALIDATE_EVENT_VENUE",
         content={"venue_id": venue_id, "start_time": start_time, "end_time": end_time},
     )
     reply = bus.send(db, msg)
@@ -621,4 +621,40 @@ def admin_decide_hire(
     )
     db.commit()
     set_flash(request, f"Hire request #{hire.id} marked {hire.status}.", "success")
+    return RedirectResponse("/admin", status_code=303)
+
+
+@app.post("/admin/venues/{venue_id}/edit")
+def admin_edit_venue(
+    venue_id: int,
+    request: Request,
+    csrf_token: str = Form(...),
+    name: str = Form(...),
+    location: str = Form(...),
+    capacity: int = Form(...),
+    hourly_rate: float = Form(...),
+    description: str = Form(""),
+    image_url: str = Form(""),
+    is_private_hire_open: str = Form("1"),
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user),
+):
+    validate_csrf(request, csrf_token)
+    require_role(user, ["admin"])
+    venue = db.query(Venue).filter(Venue.id == venue_id).first()
+    if not venue:
+        set_flash(request, "Venue not found.", "danger")
+        return RedirectResponse("/admin", status_code=303)
+
+    venue.name = name.strip()
+    venue.location = location.strip()
+    venue.capacity = capacity
+    venue.hourly_rate = hourly_rate
+    venue.description = description.strip()
+    if image_url.strip():
+        venue.image_url = image_url.strip()
+    venue.is_private_hire_open = is_private_hire_open == "1"
+    db.commit()
+
+    set_flash(request, f"Venue '{venue.name}' updated successfully.", "success")
     return RedirectResponse("/admin", status_code=303) 
