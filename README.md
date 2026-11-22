@@ -72,6 +72,6 @@ Agents own independent goals, persist internal beliefs in the database (`AgentBe
 
 1. **Clone the Repository & Create a Virtual Environment**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/Kabi1909/EventSphere.git 
    cd EventSphere_IT4123_Project
-   python -m venv venv
+   python -m venv venv 
