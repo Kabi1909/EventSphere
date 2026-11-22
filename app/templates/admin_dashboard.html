@@ -3,7 +3,6 @@
 <style>
   :root {
     --es-primary: #2563eb;
-    --es-primary-dark: #1d4ed8;
     --es-indigo: #4f46e5;
     --es-slate-900: #0f172a;
     --es-slate-700: #334155;
@@ -11,23 +10,19 @@
     --es-border: #e2e8f0;
   }
 
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(14px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  html { scroll-behavior: smooth; }
+  .dash-section-anchor { scroll-margin-top: 138px; }
 
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
   .dash-animate {
     opacity: 0;
     animation: fadeInUp 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  /* Hero Control Center Banner (Matches Home Page Theme) */
+  /* Hero Control Center Banner */
   .admin-hero {
     position: relative;
     overflow: hidden;
@@ -57,10 +52,7 @@
     background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(15, 23, 42, 0) 70%);
     pointer-events: none;
   }
-  .admin-hero-inner {
-    position: relative;
-    z-index: 2;
-  }
+  .admin-hero-inner { position: relative; z-index: 2; }
   .hero-status-pill {
     display: inline-flex;
     align-items: center;
@@ -87,10 +79,9 @@
     position: relative;
     z-index: 10;
     margin-top: -36px;
-    margin-bottom: 2rem;
+    margin-bottom: 1.45rem;
     padding: 0 0.75rem;
   }
-
   .kpi-card {
     border: 1px solid var(--es-border);
     border-radius: 16px;
@@ -132,6 +123,55 @@
   .kpi-icon-green  { background-color: #ecfdf5; color: #059669; }
   .kpi-icon-amber  { background-color: #fffbeb; color: #d97706; }
 
+  /* Sticky Section Quick-Jump Bar */
+  .quick-jump-bar {
+    position: sticky;
+    top: 70px;
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--es-border);
+    border-radius: 14px;
+    padding: 0.55rem 0.9rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .jump-pill {
+    text-decoration: none;
+    font-size: 0.81rem;
+    font-weight: 600;
+    color: var(--es-slate-700);
+    background-color: #f8fafc;
+    border: 1px solid var(--es-border);
+    padding: 0.36rem 0.85rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    transition: all 0.16s ease;
+  }
+  .jump-pill:hover {
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+    transform: translateY(-1px);
+  }
+  .jump-pill-warn {
+    background-color: #fffbeb;
+    border-color: #fde68a;
+    color: #b45309;
+  }
+  .jump-pill-warn:hover {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+    color: #92400e;
+  }
+
+  /* Cards & Section Headers */
   .dashboard-section-title {
     font-size: 1.08rem;
     font-weight: 700;
@@ -141,8 +181,6 @@
     align-items: center;
     gap: 0.5rem;
   }
-
-  /* Elevated Modern Cards */
   .dashboard-card {
     border: 1px solid var(--es-border);
     border-radius: 16px;
@@ -150,16 +188,9 @@
     background-color: #ffffff;
     transition: box-shadow 0.2s ease;
   }
-  .dashboard-card:hover {
-    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.07);
-  }
-
-  .form-card-venue {
-    border-top: 4px solid #1e293b;
-  }
-  .form-card-event {
-    border-top: 4px solid #2563eb;
-  }
+  .dashboard-card:hover { box-shadow: 0 8px 28px rgba(15, 23, 42, 0.07); }
+  .form-card-venue { border-top: 4px solid #1e293b; }
+  .form-card-event { border-top: 4px solid #2563eb; }
   .section-icon-badge {
     width: 34px;
     height: 34px;
@@ -170,13 +201,31 @@
     font-size: 1rem;
     background-color: #eff6ff;
     color: #2563eb;
+    flex-shrink: 0;
   }
-  .section-icon-dark {
-    background-color: #f1f5f9;
-    color: #0f172a;
+  .section-icon-dark { background-color: #f1f5f9; color: #0f172a; }
+
+  /* Event Thumbnail & Category Badge */
+  .event-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid var(--es-border);
+    flex-shrink: 0;
+    background-color: #e2e8f0;
+  }
+  .table-cat-pill {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.16rem 0.5rem;
+    border-radius: 5px;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
   }
 
-  /* Attractive Form Inputs & Labels */
+  /* Forms, Icon Input Groups & Live Revenue Preview */
   .field-label {
     font-size: 0.74rem;
     font-weight: 700;
@@ -186,7 +235,6 @@
     margin-bottom: 0.4rem;
     display: block;
   }
-
   .dashboard-card .form-control,
   .dashboard-card .form-select,
   .modal-content .form-control,
@@ -194,12 +242,11 @@
     background-color: #f8fafc;
     border: 1.5px solid #cbd5e1;
     border-radius: 10px;
-    padding: 0.6rem 0.85rem;
-    font-size: 0.92rem;
+    padding: 0.58rem 0.85rem;
+    font-size: 0.91rem;
     color: var(--es-slate-900);
     transition: all 0.18s ease;
   }
-
   .dashboard-card .form-control:hover,
   .dashboard-card .form-select:hover,
   .modal-content .form-control:hover,
@@ -207,7 +254,6 @@
     border-color: #94a3b8;
     background-color: #ffffff;
   }
-
   .dashboard-card .form-control:focus,
   .dashboard-card .form-select:focus,
   .modal-content .form-control:focus,
@@ -217,15 +263,59 @@
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
     outline: none;
   }
+  .es-input-group .input-group-text {
+    background-color: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    color: #64748b;
+    padding-left: 0.78rem;
+    padding-right: 0.62rem;
+    transition: all 0.18s ease;
+  }
+  .es-input-group .form-control,
+  .es-input-group .form-select {
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    padding-left: 0.25rem;
+  }
+  .es-input-group:hover .input-group-text,
+  .es-input-group:hover .form-control,
+  .es-input-group:hover .form-select {
+    border-color: #94a3b8;
+    background-color: #ffffff;
+  }
+  .es-input-group:focus-within .input-group-text,
+  .es-input-group:focus-within .form-control,
+  .es-input-group:focus-within .form-select {
+    background-color: #ffffff;
+    border-color: var(--es-primary);
+    box-shadow: none;
+  }
+  .es-input-group:focus-within .input-group-text { color: var(--es-primary); }
+  .es-input-group:focus-within {
+    border-radius: 10px;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+  .revenue-preview-box {
+    background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 0.55rem 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    color: #1e3a8a;
+  }
 
-  /* Attractive Buttons */
+  /* Primary & Solid Filled Action Buttons */
   .btn-es-primary {
     background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
     color: #ffffff;
     border: none;
     border-radius: 10px;
     font-weight: 600;
-    letter-spacing: 0.01em;
     padding: 0.65rem 1.2rem;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     transition: all 0.18s ease;
@@ -234,16 +324,13 @@
     background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
     color: #ffffff;
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
   }
-
   .btn-es-dark {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     color: #ffffff;
     border: none;
     border-radius: 10px;
     font-weight: 600;
-    letter-spacing: 0.01em;
     padding: 0.65rem 1.2rem;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
     transition: all 0.18s ease;
@@ -252,9 +339,7 @@
     background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
     color: #ffffff;
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.28);
   }
-
   .btn-action-pill {
     border-radius: 8px;
     font-weight: 600;
@@ -267,68 +352,43 @@
     white-space: nowrap;
     border: none;
   }
-  .btn-action-pill:hover {
-    transform: translateY(-1px);
-  }
-
-  /* Solid Filled Action Buttons (Edit, Publish, Cancel) */
+  .btn-action-pill:hover { transform: translateY(-1px); }
   .btn-action-edit {
     background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     color: #ffffff;
     box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28);
   }
-  .btn-action-edit:hover {
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-    color: #ffffff;
-    box-shadow: 0 5px 14px rgba(37, 99, 235, 0.38);
-  }
-
+  .btn-action-edit:hover { background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); color: #ffffff; }
   .btn-action-publish {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #ffffff;
     box-shadow: 0 3px 10px rgba(5, 150, 105, 0.28);
   }
-  .btn-action-publish:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    color: #ffffff;
-    box-shadow: 0 5px 14px rgba(5, 150, 105, 0.38);
-  }
-
+  .btn-action-publish:hover { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; }
   .btn-action-cancel {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: #ffffff;
     box-shadow: 0 3px 10px rgba(220, 38, 38, 0.28);
   }
-  .btn-action-cancel:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    color: #ffffff;
-    box-shadow: 0 5px 14px rgba(220, 38, 38, 0.38);
-  }
+  .btn-action-cancel:hover { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; }
 
-  /* Slim Occupancy Bar in Event Table */
+  /* Occupancy Bar & Modal Header */
   .mini-progress-track {
-    width: 90px;
+    width: 92px;
     height: 5px;
     background-color: #e2e8f0;
     border-radius: 999px;
     overflow: hidden;
     margin-top: 0.35rem;
   }
-  .mini-progress-fill {
-    height: 100%;
-    border-radius: 999px;
-  }
-
-  /* Modal Gradient Header */
+  .mini-progress-fill { height: 100%; width: 0%; border-radius: 999px; transition: width 0.45s ease; }
   .es-modal-header {
     background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #2563eb 100%);
     color: #ffffff;
     padding: 1.2rem 1.5rem;
     border-bottom: none;
   }
-  .es-modal-header .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%);
-  }
+  .es-modal-header .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
 
   /* Escalated Hires Banner */
   .escalated-card {
@@ -339,7 +399,27 @@
     box-shadow: 0 4px 18px rgba(245, 158, 11, 0.08);
   }
 
-  /* Agent Belief Cards */
+  /* Filter Chips */
+  .filter-chip-btn {
+    border: 1px solid var(--es-border);
+    background-color: #f8fafc;
+    color: var(--es-slate-700);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.32rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .filter-chip-btn:hover { background-color: #e2e8f0; color: var(--es-slate-900); }
+  .filter-chip-btn.active {
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+  }
+
+  /* Agent Belief Cards & Fraud Alert Accent */
   .belief-card {
     border: 1px solid var(--es-border);
     border-top: 4px solid #2563eb;
@@ -347,21 +427,23 @@
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     padding: 1rem 1.1rem;
     height: 100%;
-    min-height: 132px;
+    min-height: 134px;
     display: flex;
     flex-direction: column;
     box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
-  .belief-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-  }
+  .belief-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08); }
   .belief-card.agent-ticket { border-top-color: #059669; }
   .belief-card.agent-venue { border-top-color: #7c3aed; }
   .belief-card.agent-notification { border-top-color: #d97706; }
   .belief-card.agent-waitlist { border-top-color: #0891b2; }
-
+  .belief-card.fraud-highlight {
+    border-color: #fca5a5;
+    border-top: 4px solid #dc2626;
+    background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%);
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.12);
+  }
   .belief-agent-pill {
     font-size: 0.72rem;
     font-weight: 700;
@@ -377,7 +459,18 @@
   .agent-venue .belief-agent-pill { background-color: #f5f3ff; color: #6d28d9; }
   .agent-notification .belief-agent-pill { background-color: #fffbeb; color: #b45309; }
   .agent-waitlist .belief-agent-pill { background-color: #ecfeff; color: #0e7490; }
-
+  .fraud-badge-pill {
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
   .belief-value {
     font-size: 1.6rem;
     font-weight: 800;
@@ -386,10 +479,8 @@
     padding-top: 0.35rem;
     letter-spacing: -0.02em;
   }
-
-  /* Compact Scrollable Box for Dictionary/List Beliefs (e.g. Scan Attempts) */
   .belief-json-box {
-    max-height: 82px;
+    max-height: 84px;
     overflow-y: auto;
     background-color: #f1f5f9;
     border: 1px solid #e2e8f0;
@@ -408,11 +499,28 @@
     padding: 0.16rem 0;
     border-bottom: 1px dashed #cbd5e1;
   }
-  .belief-json-row:last-child {
-    border-bottom: none;
-  }
+  .belief-json-row:last-child { border-bottom: none; }
 
-  /* Modern Table */
+  /* Message Bus Copyable Conv ID & Table */
+  .conv-copy-btn {
+    border: 1px solid #dbeafe;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 6px;
+    padding: 0.22rem 0.52rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .conv-copy-btn:hover { background-color: #dbeafe; border-color: #93c5fd; }
+  .conv-copy-btn.copied { background-color: #dcfce7; border-color: #86efac; color: #15803d; }
+
   .table-modern thead th {
     background-color: #f8fafc;
     color: var(--es-slate-500);
@@ -467,7 +575,7 @@
   {% set ns.total_rev = ns.total_rev + s.revenue %}
 {% endfor %}
 
-<div class="kpi-strip-wrap dash-animate" style="animation-delay: 0.06s;">
+<div class="kpi-strip-wrap dash-animate" data-delay="0.06">
   <div class="row g-3">
     <div class="col-6 col-md-3">
       <div class="kpi-card d-flex align-items-center justify-content-between gap-2">
@@ -475,52 +583,57 @@
           <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Active Events</div>
           <div class="fs-3 fw-bold text-dark mt-1">{{ event_stats|length }}</div>
         </div>
-        <div class="kpi-icon-box kpi-icon-blue">
-          <i class="bi bi-calendar-event-fill"></i>
-        </div>
+        <div class="kpi-icon-box kpi-icon-blue"><i class="bi bi-calendar-event-fill"></i></div>
       </div>
     </div>
-
     <div class="col-6 col-md-3">
       <div class="kpi-card d-flex align-items-center justify-content-between gap-2">
         <div>
           <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Tickets Sold</div>
           <div class="fs-3 fw-bold text-primary mt-1">{{ ns.total_sold }} <span class="text-muted fw-semibold fs-5">/ {{ ns.total_cap }}</span></div>
         </div>
-        <div class="kpi-icon-box kpi-icon-indigo">
-          <i class="bi bi-ticket-perforated-fill"></i>
-        </div>
+        <div class="kpi-icon-box kpi-icon-indigo"><i class="bi bi-ticket-perforated-fill"></i></div>
       </div>
     </div>
-
     <div class="col-6 col-md-3">
       <div class="kpi-card d-flex align-items-center justify-content-between gap-2">
         <div>
           <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Gate Check-Ins</div>
           <div class="fs-3 fw-bold text-success mt-1">{{ ns.total_checkins }}</div>
         </div>
-        <div class="kpi-icon-box kpi-icon-green">
-          <i class="bi bi-qr-code-scan"></i>
-        </div>
+        <div class="kpi-icon-box kpi-icon-green"><i class="bi bi-qr-code-scan"></i></div>
       </div>
     </div>
-
     <div class="col-6 col-md-3">
       <div class="kpi-card d-flex align-items-center justify-content-between gap-2">
         <div>
           <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Total Revenue</div>
           <div class="fs-4 fw-bold text-dark mt-1">LKR {{ '%.2f'|format(ns.total_rev) }}</div>
         </div>
-        <div class="kpi-icon-box kpi-icon-amber">
-          <i class="bi bi-cash-stack"></i>
-        </div>
+        <div class="kpi-icon-box kpi-icon-amber"><i class="bi bi-cash-stack"></i></div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Sticky Section Quick-Jump Bar -->
+<nav class="quick-jump-bar dash-animate" data-delay="0.1" aria-label="Dashboard sections">
+  <span class="small fw-bold text-uppercase text-muted me-1" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+    <i class="bi bi-compass me-1"></i>Jump To:
+  </span>
+  <a href="#section-sales" class="jump-pill"><i class="bi bi-bar-chart-line"></i> Event Sales</a>
+  {% if escalated_hires %}
+    <a href="#section-escalated" class="jump-pill jump-pill-warn">
+      <i class="bi bi-exclamation-triangle-fill"></i> Escalated Hires ({{ escalated_hires|length }})
+    </a>
+  {% endif %}
+  <a href="#section-forms" class="jump-pill"><i class="bi bi-plus-circle"></i> Create Venue &amp; Event</a>
+  <a href="#section-beliefs" class="jump-pill"><i class="bi bi-cpu"></i> Agent Beliefs</a>
+  <a href="#section-logs" class="jump-pill"><i class="bi bi-journal-code"></i> Message Bus Log</a>
+</nav>
+
 <!-- Event Sales & Check-in Overview -->
-<div class="dashboard-card p-4 mb-4 dash-animate" style="animation-delay: 0.12s;">
+<section id="section-sales" class="dashboard-card p-4 mb-4 dash-animate dash-section-anchor" data-delay="0.12">
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
     <h5 class="dashboard-section-title mb-0">
       <span class="section-icon-badge"><i class="bi bi-bar-chart-line-fill"></i></span>
@@ -549,10 +662,24 @@
         {% set pct = ((s.sold / s.capacity) * 100)|round|int if s.capacity > 0 else 0 %}
         <tr>
           <td>
-            <div class="fw-bold text-dark">{{ s.event.title }}</div>
-            <small class="text-muted">
-              <i class="bi bi-clock me-1"></i>{{ s.event.start_time.strftime('%Y-%m-%d %H:%M') }} &ndash; {{ s.event.end_time.strftime('%H:%M') }}
-            </small>
+            <div class="d-flex align-items-center gap-3">
+              <img
+                src="{{ s.event.image_url or s.event.venue.image_url or 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=200' }}"
+                alt="{{ s.event.title }}"
+                class="event-thumb"
+              >
+              <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                  <span class="fw-bold text-dark">{{ s.event.title }}</span>
+                  {% if s.event.category %}
+                    <span class="table-cat-pill">{{ s.event.category }}</span>
+                  {% endif %}
+                </div>
+                <small class="text-muted">
+                  <i class="bi bi-clock me-1"></i>{{ s.event.start_time.strftime('%Y-%m-%d %H:%M') }} &ndash; {{ s.event.end_time.strftime('%H:%M') }}
+                </small>
+              </div>
+            </div>
           </td>
           <td class="text-secondary fw-medium">
             <i class="bi bi-geo-alt text-primary me-1"></i>{{ s.event.venue.name }}
@@ -573,7 +700,10 @@
           <td>
             <div><strong>{{ s.sold }}</strong> <span class="text-muted">/ {{ s.capacity }}</span></div>
             <div class="mini-progress-track" title="{{ pct }}% sold">
-              <div class="mini-progress-fill {% if pct >= 100 %}bg-danger{% elif pct >= 70 %}bg-warning{% else %}bg-primary{% endif %}" style="width: {{ pct }}%;"></div>
+              <div
+                class="mini-progress-fill {% if pct >= 100 %}bg-danger{% elif pct >= 70 %}bg-warning{% else %}bg-primary{% endif %}"
+                data-width="{{ pct }}"
+              ></div>
             </div>
           </td>
           <td>
@@ -603,74 +733,76 @@
             </div>
           </td>
         </tr>
-
-        <!-- Edit Event Modal -->
-        <div class="modal fade" id="editEventModal{{ s.event.id }}" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-              <form method="post" action="/admin/events/{{ s.event.id }}/edit">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <div class="modal-header es-modal-header">
-                  <h5 class="modal-title fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Event: {{ s.event.title }}</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                  <div class="mb-3">
-                    <label class="field-label">Event Title</label>
-                    <input type="text" name="title" class="form-control" value="{{ s.event.title }}" required>
-                  </div>
-                  <div class="row g-3 mb-3">
-                    <div class="col-6">
-                      <label class="field-label">Category</label>
-                      <select name="category" class="form-select">
-                        {% for cat in ['Conference', 'Concert', 'Workshop', 'Seminar'] %}
-                          <option value="{{ cat }}" {% if s.event.category == cat %}selected{% endif %}>{{ cat }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                    <div class="col-6">
-                      <label class="field-label">Venue</label>
-                      <select name="venue_id" class="form-select">
-                        {% for v in venues %}
-                          <option value="{{ v.id }}" {% if s.event.venue_id == v.id %}selected{% endif %}>{{ v.name }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                  </div>
-                  <div class="row g-3 mb-3">
-                    <div class="col-6">
-                      <label class="field-label">Start Time</label>
-                      <input type="datetime-local" name="start_time" class="form-control" value="{{ s.event.start_time.strftime('%Y-%m-%dT%H:%M') }}" required>
-                    </div>
-                    <div class="col-6">
-                      <label class="field-label">End Time</label>
-                      <input type="datetime-local" name="end_time" class="form-control" value="{{ s.event.end_time.strftime('%Y-%m-%dT%H:%M') }}" required>
-                    </div>
-                  </div>
-                  <div class="mb-2">
-                    <label class="field-label">Description</label>
-                    <textarea name="description" class="form-control" rows="3">{{ s.event.description or '' }}</textarea>
-                  </div>
-                </div>
-                <div class="modal-footer bg-light border-top px-4 py-3">
-                  <button type="button" class="btn btn-outline-secondary btn-action-pill" data-bs-dismiss="modal">Close</button>
-                  <button type="submit" class="btn btn-es-primary px-4 py-2">
-                    <i class="bi bi-check2-circle me-1"></i> Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
         {% endfor %}
       </tbody>
     </table>
   </div>
-</div>
+
+  <!-- Edit Event Modals -->
+  {% for s in event_stats %}
+  <div class="modal fade" id="editEventModal{{ s.event.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        <form method="post" action="/admin/events/{{ s.event.id }}/edit">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="modal-header es-modal-header">
+            <h5 class="modal-title fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Event: {{ s.event.title }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="field-label">Event Title</label>
+              <input type="text" name="title" class="form-control" value="{{ s.event.title }}" required>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="field-label">Category</label>
+                <select name="category" class="form-select">
+                  {% for cat in ['Conference', 'Concert', 'Workshop', 'Seminar'] %}
+                    <option value="{{ cat }}" {% if s.event.category == cat %}selected{% endif %}>{{ cat }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="field-label">Venue</label>
+                <select name="venue_id" class="form-select">
+                  {% for v in venues %}
+                    <option value="{{ v.id }}" {% if s.event.venue_id == v.id %}selected{% endif %}>{{ v.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="field-label">Start Time</label>
+                <input type="datetime-local" name="start_time" class="form-control" value="{{ s.event.start_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+              </div>
+              <div class="col-6">
+                <label class="field-label">End Time</label>
+                <input type="datetime-local" name="end_time" class="form-control" value="{{ s.event.end_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="field-label">Description</label>
+              <textarea name="description" class="form-control" rows="3">{{ s.event.description or '' }}</textarea>
+            </div>
+          </div>
+          <div class="modal-footer bg-light border-top px-4 py-3">
+            <button type="button" class="btn btn-outline-secondary btn-action-pill" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-es-primary px-4 py-2">
+              <i class="bi bi-check2-circle me-1"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</section>
 
 <!-- Escalated Private Hire Approvals -->
 {% if escalated_hires %}
-<div class="escalated-card p-4 mb-4 dash-animate" style="animation-delay: 0.16s;">
+<section id="section-escalated" class="escalated-card p-4 mb-4 dash-animate dash-section-anchor" data-delay="0.16">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="dashboard-section-title text-warning-emphasis mb-0">
       <i class="bi bi-exclamation-triangle-fill text-warning"></i>
@@ -697,11 +829,11 @@
       </form>
     </div>
   {% endfor %}
-</div>
+</section>
 {% endif %}
 
-<!-- Create Venue & Create Event (Well-Spaced Attractive Forms) -->
-<div class="row g-4 mb-4 dash-animate" style="animation-delay: 0.18s;">
+<!-- Create Venue & Create Event -->
+<section id="section-forms" class="row g-4 mb-4 dash-animate dash-section-anchor" data-delay="0.18">
   <!-- Add New Venue Card -->
   <div class="col-12 col-lg-5">
     <div class="dashboard-card form-card-venue p-4 h-100 d-flex flex-column">
@@ -719,33 +851,51 @@
 
         <div class="mb-3">
           <label class="field-label">Venue Name</label>
-          <input type="text" name="name" class="form-control" placeholder="e.g., Main University Auditorium" required>
+          <div class="input-group es-input-group">
+            <span class="input-group-text"><i class="bi bi-building"></i></span>
+            <input type="text" name="name" class="form-control" placeholder="e.g., Main University Auditorium" required>
+          </div>
         </div>
 
         <div class="mb-3">
           <label class="field-label">Location / Block</label>
-          <input type="text" name="location" class="form-control" placeholder="e.g., Faculty of Applied Science" required>
+          <div class="input-group es-input-group">
+            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+            <input type="text" name="location" class="form-control" placeholder="e.g., Faculty of Applied Science" required>
+          </div>
         </div>
 
         <div class="row g-3 mb-3">
           <div class="col-6">
             <label class="field-label">Max Capacity</label>
-            <input type="number" name="capacity" class="form-control" placeholder="e.g., 300" required>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-people"></i></span>
+              <input type="number" name="capacity" class="form-control" placeholder="300" required>
+            </div>
           </div>
           <div class="col-6">
             <label class="field-label">Hourly Rate (LKR)</label>
-            <input type="number" step="0.01" name="hourly_rate" class="form-control" placeholder="e.g., 15000.00" required>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-cash"></i></span>
+              <input type="number" step="0.01" name="hourly_rate" class="form-control" placeholder="15000.00" required>
+            </div>
           </div>
         </div>
 
         <div class="mb-3">
           <label class="field-label">Venue Image URL (Optional)</label>
-          <input type="url" name="image_url" class="form-control" placeholder="https://example.com/venue.jpg">
+          <div class="input-group es-input-group">
+            <span class="input-group-text"><i class="bi bi-image"></i></span>
+            <input type="url" name="image_url" class="form-control" placeholder="https://example.com/venue.jpg">
+          </div>
         </div>
 
         <div class="mb-4">
           <label class="field-label">Facilities &amp; Description</label>
-          <input type="text" name="description" class="form-control" placeholder="Projector, AC, Sound System">
+          <div class="input-group es-input-group">
+            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+            <input type="text" name="description" class="form-control" placeholder="Projector, AC, Sound System">
+          </div>
         </div>
 
         <button class="btn btn-es-dark w-100 mt-auto">
@@ -772,66 +922,102 @@
         <div class="row g-3 mb-3">
           <div class="col-12 col-md-8">
             <label class="field-label">Event Title</label>
-            <input type="text" name="title" class="form-control" placeholder="e.g., Annual AI &amp; Multi-Agent Symposium 2026" required>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-megaphone"></i></span>
+              <input type="text" name="title" class="form-control" placeholder="e.g., Annual AI &amp; Multi-Agent Symposium 2026" required>
+            </div>
           </div>
           <div class="col-12 col-md-4">
             <label class="field-label">Category</label>
-            <select name="category" class="form-select">
-              <option>Conference</option>
-              <option>Concert</option>
-              <option>Workshop</option>
-              <option>Seminar</option>
-            </select>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-tag"></i></span>
+              <select name="category" class="form-select">
+                <option>Conference</option>
+                <option>Concert</option>
+                <option>Workshop</option>
+                <option>Seminar</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div class="row g-3 mb-3">
           <div class="col-12 col-md-7">
             <label class="field-label">Select Venue</label>
-            <select name="venue_id" class="form-select">
-              {% for v in venues %}
-                <option value="{{ v.id }}">{{ v.name }} (Cap: {{ v.capacity }})</option>
-              {% endfor %}
-            </select>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+              <select name="venue_id" class="form-select">
+                {% for v in venues %}
+                  <option value="{{ v.id }}">{{ v.name }} (Cap: {{ v.capacity }})</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
           <div class="col-12 col-md-5">
             <label class="field-label">Publication Status</label>
-            <select name="status" class="form-select">
-              <option value="published">Publish Now</option>
-              <option value="draft">Save as Draft</option>
-            </select>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-eye"></i></span>
+              <select name="status" class="form-select">
+                <option value="published">Publish Now</option>
+                <option value="draft">Save as Draft</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div class="row g-3 mb-3">
           <div class="col-12 col-md-6">
             <label class="field-label">Start Date &amp; Time</label>
-            <input type="datetime-local" name="start_time" class="form-control" required>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+              <input type="datetime-local" name="start_time" class="form-control" required>
+            </div>
           </div>
           <div class="col-12 col-md-6">
             <label class="field-label">End Date &amp; Time</label>
-            <input type="datetime-local" name="end_time" class="form-control" required>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+              <input type="datetime-local" name="end_time" class="form-control" required>
+            </div>
           </div>
         </div>
 
-        <div class="row g-3 mb-3">
+        <div class="row g-3 mb-2">
           <div class="col-12 col-md-4">
             <label class="field-label">Initial Ticket Tier</label>
-            <input type="text" name="tier_name" class="form-control" placeholder="e.g., General / VIP" required>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-ticket-perforated"></i></span>
+              <input type="text" name="tier_name" class="form-control" placeholder="General / VIP" required>
+            </div>
           </div>
           <div class="col-6 col-md-4">
             <label class="field-label">Ticket Price (LKR)</label>
-            <input type="number" step="0.01" name="tier_price" class="form-control" placeholder="e.g., 1000.00" required>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-currency-exchange"></i></span>
+              <input type="number" step="0.01" name="tier_price" id="tierPriceInput" class="form-control" placeholder="1000.00" required>
+            </div>
           </div>
           <div class="col-6 col-md-4">
             <label class="field-label">Seat Quantity</label>
-            <input type="number" name="tier_qty" class="form-control" placeholder="e.g., 100" required>
+            <div class="input-group es-input-group">
+              <span class="input-group-text"><i class="bi bi-123"></i></span>
+              <input type="number" name="tier_qty" id="tierQtyInput" class="form-control" placeholder="100" required>
+            </div>
           </div>
+        </div>
+
+        <!-- Live Potential Revenue Preview -->
+        <div class="revenue-preview-box mb-3">
+          <span><i class="bi bi-calculator me-1"></i> Estimated Max Tier Revenue:</span>
+          <strong id="potentialRevenueValue">LKR 0.00</strong>
         </div>
 
         <div class="mb-3">
           <label class="field-label">Event Description (Optional)</label>
-          <input type="text" name="description" class="form-control" placeholder="Brief summary of speakers, agenda, or entry rules">
+          <div class="input-group es-input-group">
+            <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
+            <input type="text" name="description" class="form-control" placeholder="Brief summary of speakers, agenda, or entry rules">
+          </div>
         </div>
 
         <div class="mb-4">
@@ -845,10 +1031,10 @@
       </form>
     </div>
   </div>
-</div>
+</section>
 
-<!-- Persistent Agent Beliefs (Uniform Compact Card Grid) -->
-<div class="dashboard-card p-4 mb-4 dash-animate" style="animation-delay: 0.22s;">
+<!-- Persistent Agent Beliefs (Filterable Card Grid + Fraud Highlighting) -->
+<section id="section-beliefs" class="dashboard-card p-4 mb-4 dash-animate dash-section-anchor" data-delay="0.22">
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
     <div class="d-flex align-items-start gap-2">
       <span class="section-icon-badge mt-1"><i class="bi bi-cpu-fill"></i></span>
@@ -858,11 +1044,20 @@
       </div>
     </div>
     <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
-      <i class="bi bi-database-check me-1"></i>{{ beliefs|length }} Active Belief Keys
+      <i class="bi bi-database-check me-1"></i><span id="beliefVisibleCount">{{ beliefs|length }}</span> Active Belief Keys
     </span>
   </div>
 
-  <div class="row g-3">
+  <!-- Agent Filter Pills -->
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3 pb-3 border-bottom" id="beliefFilterBar">
+    <button type="button" class="filter-chip-btn active" data-filter-agent="ALL">All Agents</button>
+    <button type="button" class="filter-chip-btn" data-filter-agent="BookingAgent">BookingAgent</button>
+    <button type="button" class="filter-chip-btn" data-filter-agent="TicketAgent">TicketAgent</button>
+    <button type="button" class="filter-chip-btn" data-filter-agent="VenueAgent">VenueAgent</button>
+    <button type="button" class="filter-chip-btn" data-filter-agent="NotificationAgent">NotificationAgent</button>
+  </div>
+
+  <div class="row g-3" id="beliefCardsGrid">
     {% for b in beliefs %}
       {% set agent_class = '' %}
       {% set agent_icon = 'bi-cart-check-fill' %}
@@ -879,13 +1074,22 @@
         {% set agent_class = 'agent-waitlist' %}
         {% set agent_icon = 'bi-hourglass-split' %}
       {% endif %}
+
       {% set raw_val = b.value_json|string %}
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-        <div class="belief-card {{ agent_class }}">
-          <div class="d-flex justify-content-between align-items-center mb-2">
+      {% set key_lower = b.key|lower %}
+      {% set is_suspicious_alert = ('suspicious' in key_lower) and (raw_val|trim not in ['', '[]', '{}', '0', 'None', 'null']) %}
+
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 belief-col" data-agent="{{ b.agent_name }}">
+        <div class="belief-card {{ agent_class }} {% if is_suspicious_alert %}fraud-highlight{% endif %}">
+          <div class="d-flex justify-content-between align-items-center gap-1 mb-2">
             <span class="belief-agent-pill">
               <i class="bi {{ agent_icon }}"></i> {{ b.agent_name }}
             </span>
+            {% if is_suspicious_alert %}
+              <span class="fraud-badge-pill">
+                <i class="bi bi-shield-exclamation"></i> Alert
+              </span>
+            {% endif %}
           </div>
           <div class="text-muted small fw-semibold">{{ b.key | replace('_', ' ') | title }}</div>
 
@@ -895,10 +1099,12 @@
               {% if clean_inner %}
                 {% for pair in clean_inner.split(',') %}
                   {% set kv = pair.split(':') %}
+                  {% set num_val = kv[1].strip()|int if kv|length > 1 else 0 %}
+                  {% set is_high_scan = ('scan' in key_lower) and (num_val >= 3) %}
                   <div class="belief-json-row">
                     <span class="text-truncate me-2" title="{{ kv[0].strip().strip('\"') }}">{{ kv[0].strip().strip('"') }}</span>
                     {% if kv|length > 1 %}
-                      <span class="badge bg-dark-subtle text-dark fw-bold">{{ kv[1].strip() }}</span>
+                      <span class="badge {% if is_high_scan %}bg-danger text-white scan-high-risk{% else %}bg-dark-subtle text-dark{% endif %} fw-bold">{{ kv[1].strip() }}</span>
                     {% endif %}
                   </div>
                 {% endfor %}
@@ -912,7 +1118,7 @@
               {% if clean_list %}
                 {% for item in clean_list.split(',') %}
                   <div class="belief-json-row">
-                    <span>{{ item.strip().strip('"') }}</span>
+                    <span class="{% if is_suspicious_alert %}text-danger fw-bold{% endif %}">{{ item.strip().strip('"') }}</span>
                   </div>
                 {% endfor %}
               {% else %}
@@ -920,16 +1126,16 @@
               {% endif %}
             </div>
           {% else %}
-            <div class="belief-value">{{ b.value_json }}</div>
+            <div class="belief-value {% if is_suspicious_alert %}text-danger{% endif %}">{{ b.value_json }}</div>
           {% endif %}
         </div>
       </div>
     {% endfor %}
   </div>
-</div>
+</section>
 
-<!-- Traceable Agent Message Log -->
-<div class="dashboard-card p-4 dash-animate" style="animation-delay: 0.26s;">
+<!-- Traceable Agent Message Log (Live Performative Filter, Search & Copyable Conv IDs) -->
+<section id="section-logs" class="dashboard-card p-4 dash-animate dash-section-anchor" data-delay="0.26">
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
     <div class="d-flex align-items-start gap-2">
       <span class="section-icon-badge section-icon-dark mt-1"><i class="bi bi-journal-code"></i></span>
@@ -939,8 +1145,23 @@
       </div>
     </div>
     <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">
-      <i class="bi bi-arrow-left-right me-1 text-primary"></i>Latest {{ logs|length }} Messages
+      <i class="bi bi-arrow-left-right me-1 text-primary"></i>Showing <span id="logVisibleCount">{{ logs|length }}</span> / {{ logs|length }} Messages
     </span>
+  </div>
+
+  <!-- Live Performative Filter Chips & Keyword Search -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-3 border-bottom">
+    <div class="d-flex flex-wrap gap-2" id="logPerformativeBar">
+      <button type="button" class="filter-chip-btn active" data-perf="ALL">All</button>
+      <button type="button" class="filter-chip-btn" data-perf="REQUEST">REQUEST</button>
+      <button type="button" class="filter-chip-btn" data-perf="AGREE">AGREE</button>
+      <button type="button" class="filter-chip-btn" data-perf="REFUSE">REFUSE / FAILURE</button>
+      <button type="button" class="filter-chip-btn" data-perf="INFORM">INFORM</button>
+    </div>
+    <div class="input-group es-input-group" style="max-width: 300px;">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" id="logSearchInput" class="form-control form-control-sm" placeholder="Filter by agent, action, conv ID...">
+    </div>
   </div>
 
   <div class="table-responsive">
@@ -955,10 +1176,15 @@
           <th>Payload Content</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="logTableBody">
         {% for log in logs %}
-        <tr>
-          <td><code class="text-primary fw-semibold">{{ log.conversation_id }}</code></td>
+        <tr class="log-row" data-perf="{{ log.performative }}">
+          <td>
+            <button type="button" class="conv-copy-btn" data-copy="{{ log.conversation_id }}" title="Click to copy Conversation ID">
+              <span>{{ log.conversation_id }}</span>
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </td>
           <td><strong class="text-dark">{{ log.sender }}</strong></td>
           <td class="text-secondary fw-medium">{{ log.receiver }}</td>
           <td>
@@ -978,8 +1204,117 @@
           </td>
         </tr>
         {% endfor %}
+        <tr id="logEmptyRow" class="d-none">
+          <td colspan="6" class="text-center text-muted py-4">
+            <i class="bi bi-funnel me-1"></i>No message bus entries match the current filter.
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
-</div>
+</section>
+
+<script>
+  // 1. Linter-clean animation delays & occupancy bar widths
+  document.querySelectorAll('[data-delay]').forEach(el => {
+    el.style.animationDelay = el.dataset.delay + 's';
+  });
+  document.querySelectorAll('[data-width]').forEach(el => {
+    el.style.width = el.dataset.width + '%';
+  });
+
+  // 2. Highlight any belief card containing a high-risk repeated scan (>= 3)
+  document.querySelectorAll('.scan-high-risk').forEach(badge => {
+    const card = badge.closest('.belief-card');
+    if (card) card.classList.add('fraud-highlight');
+  });
+
+  // 3. Live Potential Tier Revenue preview (Price x Seats)
+  const priceInput = document.getElementById('tierPriceInput');
+  const qtyInput = document.getElementById('tierQtyInput');
+  const revenueOut = document.getElementById('potentialRevenueValue');
+  function updateRevenuePreview() {
+    const price = parseFloat(priceInput?.value || '0') || 0;
+    const qty = parseInt(qtyInput?.value || '0', 10) || 0;
+    const total = Math.max(0, price * qty);
+    if (revenueOut) {
+      revenueOut.textContent = 'LKR ' + total.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+  }
+  priceInput?.addEventListener('input', updateRevenuePreview);
+  qtyInput?.addEventListener('input', updateRevenuePreview);
+
+  // 4. Client-side Agent Filter Pills for Persistent Beliefs
+  const beliefCols = document.querySelectorAll('.belief-col');
+  const beliefCountEl = document.getElementById('beliefVisibleCount');
+  document.querySelectorAll('#beliefFilterBar [data-filter-agent]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#beliefFilterBar .filter-chip-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.dataset.filterAgent;
+      let visible = 0;
+      beliefCols.forEach(col => {
+        const match = target === 'ALL' || col.dataset.agent === target;
+        col.classList.toggle('d-none', !match);
+        if (match) visible++;
+      });
+      if (beliefCountEl) beliefCountEl.textContent = visible;
+    });
+  });
+
+  // 5. Live Performative Filter + Keyword Search for Message Bus Log
+  let activePerf = 'ALL';
+  const logRows = document.querySelectorAll('#logTableBody .log-row');
+  const logSearchInput = document.getElementById('logSearchInput');
+  const logCountEl = document.getElementById('logVisibleCount');
+  const logEmptyRow = document.getElementById('logEmptyRow');
+
+  function applyLogFilters() {
+    const query = (logSearchInput?.value || '').trim().toLowerCase();
+    let visible = 0;
+    logRows.forEach(row => {
+      const perf = (row.dataset.perf || '').toUpperCase();
+      const perfMatch =
+        activePerf === 'ALL' ||
+        perf === activePerf ||
+        (activePerf === 'REFUSE' && perf === 'FAILURE');
+      const textMatch = !query || row.textContent.toLowerCase().includes(query);
+      const show = perfMatch && textMatch;
+      row.classList.toggle('d-none', !show);
+      if (show) visible++;
+    });
+    if (logCountEl) logCountEl.textContent = visible;
+    if (logEmptyRow) logEmptyRow.classList.toggle('d-none', visible > 0 || logRows.length === 0);
+  }
+
+  document.querySelectorAll('#logPerformativeBar [data-perf]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#logPerformativeBar .filter-chip-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activePerf = btn.dataset.perf;
+      applyLogFilters();
+    });
+  });
+  logSearchInput?.addEventListener('input', applyLogFilters);
+
+  // 6. Click-to-Copy Conversation ID Badges
+  document.querySelectorAll('.conv-copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.copy;
+      if (!id || !navigator.clipboard) return;
+      navigator.clipboard.writeText(id).then(() => {
+        const icon = btn.querySelector('i');
+        btn.classList.add('copied');
+        if (icon) icon.className = 'bi bi-check2';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          if (icon) icon.className = 'bi bi-clipboard';
+        }, 1200);
+      }).catch(() => {});
+    });
+  });
+</script>
 {% endblock %} 
