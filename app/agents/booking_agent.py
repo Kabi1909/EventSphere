@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 import uuid
 
@@ -15,7 +15,7 @@ class BookingAgent(BaseAgent):
     MAX_TICKETS_PER_BOOKING = 6
 
     def _utcnow(self):
-        return datetime.now(timezone.utc).replace(tzinfo=None)
+        return (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)
 
     def _calculate_refund(self, event_start: datetime, total_paid: float) -> tuple[float, str]:
         hours_until = (event_start - self._utcnow()).total_seconds() / 3600.0

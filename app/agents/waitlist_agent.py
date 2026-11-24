@@ -1,4 +1,4 @@
-from typing import Any 
+from typing import Any
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import update
@@ -6,12 +6,13 @@ from app.models import WaitlistEntry, TicketTier
 from app.agents.base import BaseAgent
 from app.agents.protocol import AgentMessage, Performative
 
+
 class WaitlistAgent(BaseAgent):
     name = "WaitlistAgent"
     HOLD_MINUTES = 15
 
     def _utcnow(self):
-        return datetime.now(timezone.utc).replace(tzinfo=None)
+        return (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)
 
     def _allocate_freed_seats(self, db: Session, tier_id: int, bus: Any, conv_id: str) -> int:
         tier = db.query(TicketTier).filter_by(id=tier_id).first()
@@ -54,7 +55,7 @@ class WaitlistAgent(BaseAgent):
                                 "event_title": entry.event.title,
                                 "tier_name": tier.name,
                                 "quantity": entry.quantity,
-                                "expires_at": entry.hold_expires_at.strftime("%H:%M:%S UTC"),
+                                "expires_at": entry.hold_expires_at.strftime("%H:%M:%S SLST"),
                             },
                         ),
                     )
@@ -145,4 +146,5 @@ class WaitlistAgent(BaseAgent):
             offers = self._allocate_freed_seats(db, tier_id, bus, msg.conversation_id)
             return self.reply(msg, Performative.INFORM, {"offers_made": offers})
 
-        return self.reply(msg, Performative.FAILURE, {"reason": f"Unsupported action {msg.action}"})
+        return self.reply(msg, Performative.FAILURE, {"reason": f"Unsupported action {msg.action}"}) 
+    

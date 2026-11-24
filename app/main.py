@@ -1,3 +1,4 @@
+import asyncio
 import io
 import base64
 import json
@@ -24,6 +25,21 @@ from app.agents.registry import bus
 from app.seed import seed_database
 
 
+async def waitlist_expiry_worker():
+    """Proactive background loop: periodically runs WaitlistAgent expiry sweep without user input."""
+    while True:
+        await asyncio.sleep(30)
+        db = SessionLocal()
+        try:
+            waitlist_agent = bus.agents.get("WaitlistAgent")
+            if waitlist_agent:
+                waitlist_agent.run_expiry_sweep(db, bus)
+        except Exception:
+            db.rollback()
+        finally:
+            db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
@@ -32,7 +48,16 @@ async def lifespan(app: FastAPI):
         seed_database(db)
     finally:
         db.close()
-    yield
+
+    sweep_task = asyncio.create_task(waitlist_expiry_worker())
+    try:
+        yield
+    finally:
+        sweep_task.cancel()
+        try:
+            await sweep_task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(title="EventSphere Multi-Agent Platform", lifespan=lifespan)

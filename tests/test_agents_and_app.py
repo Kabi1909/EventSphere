@@ -16,6 +16,11 @@ TEST_DB_URL = "sqlite:///./test_eventsphere.db"
 engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
+def slst_now() -> datetime:
+    return (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)
+
+
 def override_get_db():
     db = TestingSessionLocal()
     try:
@@ -23,7 +28,9 @@ def override_get_db():
     finally:
         db.close()
 
+
 app.dependency_overrides[get_db] = override_get_db
+
 
 @pytest.fixture(autouse=True)
 def setup_db():
@@ -42,7 +49,7 @@ def setup_db():
     db.add_all([v1, v2])
     db.flush()
 
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = slst_now()
     ev = Event(
         title="Live Concert",
         category="Concert",
@@ -60,6 +67,7 @@ def setup_db():
     yield
     Base.metadata.drop_all(bind=engine)
 
+
 # 1. VenueAgent clash detection with 60-min turnaround buffer
 def test_venue_agent_clash_and_buffer():
     db = TestingSessionLocal()
@@ -69,7 +77,7 @@ def test_venue_agent_clash_and_buffer():
         sender="Admin:1",
         receiver="VenueAgent",
         performative=Performative.REQUEST,
-        action="CHECK_EVENT_SLOT",
+        action="VALIDATE_EVENT_VENUE",
         content={
             "venue_id": ev.venue_id,
             "start_time": (ev.end_time + timedelta(minutes=30)).isoformat(),
@@ -80,6 +88,7 @@ def test_venue_agent_clash_and_buffer():
     assert res.performative == Performative.REFUSE
     assert "buffer" in res.content["reason"].lower()
     db.close()
+
 
 # 2. VenueAgent private hire auto-confirm & counter-proposal alternatives
 def test_venue_agent_private_hire_and_counter_proposal():
@@ -92,9 +101,11 @@ def test_venue_agent_private_hire_and_counter_proposal():
         performative=Performative.REQUEST,
         action="REQUEST_PRIVATE_HIRE",
         content={
+            "user_id": 3,
             "venue_id": ev.venue_id,
             "start_time": ev.start_time.isoformat(),
             "end_time": ev.end_time.isoformat(),
+            "purpose": "Club Meeting",
             "guest_count": 40,
         },
     )
@@ -102,6 +113,7 @@ def test_venue_agent_private_hire_and_counter_proposal():
     assert res.performative == Performative.PROPOSE
     assert len(res.content["alternatives"]) >= 1
     db.close()
+
 
 # 3. BookingAgent max 6 tickets rule
 def test_booking_agent_max_quantity_limit():
@@ -119,6 +131,7 @@ def test_booking_agent_max_quantity_limit():
     assert res.performative == Performative.REFUSE
     assert "6" in res.content["reason"]
     db.close()
+
 
 # 4. Concurrency / Simultaneous last-seat booking prevents overbooking
 def test_concurrent_last_seat_booking_no_oversell():
@@ -145,6 +158,7 @@ def test_concurrent_last_seat_booking_no_oversell():
 
     assert results.count(Performative.AGREE) == 1
     assert results.count(Performative.REFUSE) == 1
+
 
 # 5. TicketAgent single check-in & double scan rejection + suspicious belief tracking
 def test_ticket_agent_double_checkin_rejected():
@@ -189,6 +203,7 @@ def test_ticket_agent_double_checkin_rejected():
     assert "already used" in scan2.content["reason"].lower()
     db.close()
 
+
 # 6. TicketAgent rejects wrong event ticket
 def test_ticket_agent_wrong_event_rejected():
     db = TestingSessionLocal()
@@ -218,6 +233,7 @@ def test_ticket_agent_wrong_event_rejected():
     assert scan.performative == Performative.REFUSE
     assert "wrong event" in scan.content["reason"].lower()
     db.close()
+
 
 # 7. WaitlistAgent reactive offer on cancellation & proactive timer expiry sweep
 def test_waitlist_reactive_and_proactive_expiry():
@@ -266,13 +282,14 @@ def test_waitlist_reactive_and_proactive_expiry():
     assert entry.status == "offered"
 
     # Simulate 16 minutes passing and run proactive expiry sweep
-    entry.hold_expires_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=1)
+    entry.hold_expires_at = slst_now() - timedelta(minutes=1)
     db.commit()
     expired_count = waitlist_agent.run_expiry_sweep(db, bus)
     assert expired_count == 1
     db.refresh(entry)
     assert entry.status == "expired"
     db.close()
+
 
 # 8. NotificationAgent turns INFORM events into persistent user notifications
 def test_notification_agent_creates_user_alerts():
@@ -294,29 +311,29 @@ def test_notification_agent_creates_user_alerts():
     assert "confirmed" in notes[0].title.lower()
     db.close()
 
-# 9. HTTP Agent Inbox Endpoint & Message Traceability Log
-def test_http_agent_inbox_and_traceability():
-    client = TestClient(app)
-    payload = {
-        "sender": "ExternalTestAgent",
-        "receiver": "VenueAgent",
-        "performative": "REQUEST",
-        "action": "CHECK_EVENT_SLOT",
-        "content": {
-            "venue_id": 2,
-            "start_time": (datetime.now(timezone.utc) + timedelta(days=5)).isoformat(),
-            "end_time": (datetime.now(timezone.utc) + timedelta(days=5, hours=2)).isoformat(),
-        },
-    }
-    resp = client.post("/api/agents/inbox", json=payload)
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["performative"] == "AGREE"
 
+# 9. MessageBus Conversation Traceability Log
+def test_message_bus_traceability():
     db = TestingSessionLocal()
-    logs = db.query(AgentMessageLog).filter_by(conversation_id=data["conversation_id"]).all()
+    now = slst_now()
+    msg = AgentMessage(
+        sender="Admin:1",
+        receiver="VenueAgent",
+        performative=Performative.REQUEST,
+        action="VALIDATE_EVENT_VENUE",
+        content={
+            "venue_id": 2,
+            "start_time": (now + timedelta(days=5)).isoformat(),
+            "end_time": (now + timedelta(days=5, hours=2)).isoformat(),
+        },
+    )
+    res = bus.send(db, msg)
+    assert res.performative == Performative.AGREE
+
+    logs = db.query(AgentMessageLog).filter_by(conversation_id=msg.conversation_id).all()
     assert len(logs) == 2
     db.close()
+
 
 # 10. Role-Based Access Control blocks unauthorized users from /admin and /staff/scanner
 def test_role_based_access_control():
@@ -324,4 +341,5 @@ def test_role_based_access_control():
     res_admin = client.get("/admin")
     res_staff = client.get("/staff/scanner")
     assert res_admin.status_code in (401, 403)
-    assert res_staff.status_code in (401, 403)
+    assert res_staff.status_code in (401, 403) 
+    

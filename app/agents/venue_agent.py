@@ -41,6 +41,61 @@ class VenueAgent(BaseAgent):
                 )
         return None
 
+    def _find_alternatives(
+        self,
+        db: Session,
+        requested_venue: Venue,
+        start_time: datetime,
+        end_time: datetime,
+        guest_count: int,
+    ) -> list[dict[str, Any]]:
+        alternatives: list[dict[str, Any]] = []
+        duration = end_time - start_time
+        duration_hours = round(duration.total_seconds() / 3600.0, 2)
+
+        # 1. Alternative venues available at the exact requested time
+        other_venues = (
+            db.query(Venue)
+            .filter(
+                Venue.id != requested_venue.id,
+                Venue.is_private_hire_open == True,
+                Venue.capacity >= guest_count,
+            )
+            .all()
+        )
+        for alt_v in other_venues:
+            if self._has_clash(db, alt_v.id, start_time, end_time) is None:
+                alternatives.append({
+                    "type": "alternative_venue",
+                    "venue_id": alt_v.id,
+                    "venue_name": alt_v.name,
+                    "start_time": start_time.strftime("%Y-%m-%d %H:%M"),
+                    "end_time": end_time.strftime("%Y-%m-%d %H:%M"),
+                    "quoted_price": round(duration_hours * float(alt_v.hourly_rate), 2),
+                })
+                if len(alternatives) >= 2:
+                    break
+
+        # 2. Alternative time slots at the requested venue
+        time_alts_added = 0
+        for offset in (timedelta(hours=2), timedelta(hours=4), timedelta(days=1), timedelta(days=2)):
+            alt_start = start_time + offset
+            alt_end = alt_start + duration
+            if self._has_clash(db, requested_venue.id, alt_start, alt_end) is None:
+                alternatives.append({
+                    "type": "alternative_time",
+                    "venue_id": requested_venue.id,
+                    "venue_name": requested_venue.name,
+                    "start_time": alt_start.strftime("%Y-%m-%d %H:%M"),
+                    "end_time": alt_end.strftime("%Y-%m-%d %H:%M"),
+                    "quoted_price": round(duration_hours * float(requested_venue.hourly_rate), 2),
+                })
+                time_alts_added += 1
+                if time_alts_added >= 2:
+                    break
+
+        return alternatives
+
     def handle_message(self, db: Session, msg: AgentMessage, bus: Any) -> AgentMessage:
         if msg.action == "VALIDATE_EVENT_VENUE":
             venue_id = int(msg.content["venue_id"])
@@ -131,13 +186,28 @@ class VenueAgent(BaseAgent):
             clash = self._has_clash(db, venue_id, start_time, end_time)
             if clash:
                 self.set_belief(db, "clashes_prevented", self.get_belief(db, "clashes_prevented", 0) + 1)
+                alternatives = self._find_alternatives(db, venue, start_time, end_time, guest_count)
+                if alternatives:
+                    return AgentMessage(
+                        conversation_id=msg.conversation_id,
+                        sender=self.name,
+                        receiver=msg.sender,
+                        performative=Performative.PROPOSE,
+                        action="REQUEST_PRIVATE_HIRE",
+                        content={
+                            "status": "counter_proposed",
+                            "quoted_price": 0.0,
+                            "reason": clash,
+                            "alternatives": alternatives,
+                        },
+                    )
                 return AgentMessage(
                     conversation_id=msg.conversation_id,
                     sender=self.name,
                     receiver=msg.sender,
                     performative=Performative.REFUSE,
                     action="REQUEST_PRIVATE_HIRE",
-                    content={"reason": clash},
+                    content={"reason": clash, "alternatives": []},
                 )
 
             # Standard flat hourly pricing (1.0x — peak/weekend surge pricing removed)
@@ -205,3 +275,4 @@ class VenueAgent(BaseAgent):
             action=msg.action,
             content={"reason": f"Unknown action: {msg.action}"},
         ) 
+    
