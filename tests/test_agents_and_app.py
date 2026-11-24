@@ -342,4 +342,3 @@ def test_role_based_access_control():
     res_staff = client.get("/staff/scanner")
     assert res_admin.status_code in (401, 403)
     assert res_staff.status_code in (401, 403) 
-    
